@@ -8,10 +8,8 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class MarketService implements OnModuleInit, OnModuleDestroy {
-  // Теперь храним массив активных подключений
   private binanceSockets: WebSocket[] = [];
 
-  // Список наших основных монет
   private readonly SUPPORTED_SYMBOLS = [
     'btcusdt',
     'ethusdt',
@@ -20,26 +18,34 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     'xrpusdt',
   ];
 
+  // 👇 ДОБАВИЛИ: Список интервалов (1 минута, 15 минут, 1 час, 1 день)
+  private readonly SUPPORTED_INTERVALS = ['1m', '15m', '1h', '1d'];
+
   constructor(
     private readonly marketGateway: MarketGateway,
     private readonly httpService: HttpService,
   ) {}
 
   onModuleInit() {
-    // При старте пробегаемся по массиву и подключаемся к каждой монете
+    // 👇 ИЗМЕНИЛИ: Теперь мы для каждой монеты запускаем 4 разных потока времени
     this.SUPPORTED_SYMBOLS.forEach((symbol) => {
-      this.connectToBinanceStream(symbol, '1d');
+      this.SUPPORTED_INTERVALS.forEach((interval) => {
+        this.connectToBinanceStream(symbol, interval);
+      });
     });
   }
 
   onModuleDestroy() {
-    // Аккуратно закрываем все соединения при выключении сервера
     this.binanceSockets.forEach((ws) => ws.close());
   }
 
-  // Публичный метод, который отдаст список монет контроллеру (в верхнем регистре)
   public getSupportedSymbols(): string[] {
     return this.SUPPORTED_SYMBOLS.map((s) => s.toUpperCase());
+  }
+
+  // 👇 ДОБАВИЛИ: Метод, чтобы отдавать фронтенду доступные интервалы
+  public getSupportedIntervals(): string[] {
+    return [...this.SUPPORTED_INTERVALS];
   }
 
   public async getHistory(
@@ -55,14 +61,12 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
       volume: number;
     }[]
   > {
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=100`;
+    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=1000`;
 
-    // Явно указываем, что Binance возвращает массив массивов, состоящих из строк и чисел
     const response = await firstValueFrom(
       this.httpService.get<(string | number)[][]>(url),
     );
 
-    // Теперь TypeScript знает, что response.data — это массив, и разрешает использовать .map()
     return response.data.map((item) => ({
       time: Math.floor(Number(item[0]) / 1000),
       open: parseFloat(String(item[1])),
@@ -77,11 +81,11 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     const wsUrl = `wss://stream.binance.com:9443/ws/${symbol}@kline_${interval}`;
 
     const ws = new WebSocket(wsUrl);
-    this.binanceSockets.push(ws); // Сохраняем в память
+    this.binanceSockets.push(ws);
 
     ws.on('open', () => {
       console.log(
-        `[Binance WS] Подключено к потоку: ${symbol.toUpperCase()} (${interval})`,
+        `[Binance WS] Подключено: ${symbol.toUpperCase()} (${interval})`,
       );
     });
 
@@ -92,7 +96,7 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
 
       const formattedMessage: MarketStreamMessageDTO = {
         symbol: payload.s,
-        interval: payload.k.i,
+        interval: payload.k.i, // 👈 ВАЖНО: Здесь передается интервал ('1m', '1h' и т.д.)
         kline: {
           time: payload.k.t,
           open: parseFloat(payload.k.o),
@@ -104,20 +108,18 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         },
       };
 
-      // Шлем в Gateway. Gateway разошлет это фронтенду.
-      // Фронтенд сам поймет, к какой монете относится цена, по полю formattedMessage.symbol
       this.marketGateway.broadcastMarketData(formattedMessage);
     });
 
     ws.on('error', (error) => {
-      console.error(`[Binance WS] Ошибка потока ${symbol}:`, error);
+      console.error(
+        `[Binance WS] Ошибка потока ${symbol} (${interval}):`,
+        error,
+      );
     });
 
     ws.on('close', () => {
-      console.log(
-        `[Binance WS] Соединение закрыто (${symbol}). Переподключение...`,
-      );
-      // Удаляем закрытый сокет из массива и пробуем снова через 5 сек
+      console.log(`[Binance WS] Переподключение ${symbol} (${interval})...`);
       this.binanceSockets = this.binanceSockets.filter((s) => s !== ws);
       setTimeout(() => this.connectToBinanceStream(symbol, interval), 5000);
     });

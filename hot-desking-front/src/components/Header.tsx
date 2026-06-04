@@ -36,7 +36,13 @@ export function Header() {
           </Link>
           
           {isLoggedIn ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
+              
+              {/* 👇 ДОБАВИЛИ КНОПКУ РЫНКА СЮДА */}
+              <Link href="/market" className="font-medium hover:text-blue-400 transition-colors">
+                Рынки
+              </Link>
+
               {/* Круглая иконка профиля */}
               <Link 
                 href="/profile" 

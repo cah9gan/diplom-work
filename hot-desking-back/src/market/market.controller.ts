@@ -1,8 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { MarketService } from './market.service';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { AccessGuard, SWAGGER_BEARER_NAME } from '../common';
 
 @ApiTags('Market')
+@ApiBearerAuth(SWAGGER_BEARER_NAME) // Авторизация для Swagger
+@UseGuards(AccessGuard) // 👈 Закрываем ВСЕ эндпоинты в этом контроллере твоим секьюрити-гардом
 @Controller('market')
 export class MarketController {
   constructor(private readonly marketService: MarketService) {}
@@ -13,7 +16,12 @@ export class MarketController {
     return this.marketService.getSupportedSymbols();
   }
 
-  // ДОБАВЛЯЕМ ЭНДПОИНТ ИСТОРИИ
+  @Get('intervals')
+  @ApiOperation({ summary: 'Получить список доступных таймфреймов' })
+  getSupportedIntervals(): string[] {
+    return this.marketService.getSupportedIntervals();
+  }
+
   @Get('history/:symbol')
   @ApiOperation({ summary: 'Получить исторические данные для графика' })
   async getHistory(
