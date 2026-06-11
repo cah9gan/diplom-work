@@ -364,14 +364,6 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
-}
-
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type PasswordResetCreateNestedOneWithoutUserInput = {
   create?: Prisma.XOR<Prisma.PasswordResetCreateWithoutUserInput, Prisma.PasswordResetUncheckedCreateWithoutUserInput>
   connectOrCreate?: Prisma.PasswordResetCreateOrConnectWithoutUserInput

@@ -8,18 +8,35 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 👇 Добавляем стейт для проверки роли админа
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const userString = localStorage.getItem("user");
     
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoggedIn(!!token);
+
+    if (token && userString) {
+      try {
+        const user = JSON.parse(userString);
+        // Проверяем, совпадает ли роль с Admin (строка должна соответствовать твоему UserRole.Admin на бэке)
+        setIsAdmin(user.role === "Admin" || user.role === "admin");
+      } catch (e) {
+        console.error("Ошибка парсинга данных пользователя", e);
+        setIsAdmin(false);
+      }
+    } else {
+      setIsAdmin(false);
+    }
   }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsLoggedIn(false);
+    setIsAdmin(false);
     router.push("/login");
   };
 
@@ -35,15 +52,24 @@ export function Header() {
             Главная
           </Link>
           
-          {isLoggedIn ? (
-            <div className="flex items-center gap-6">
-              
-              {/* 👇 ДОБАВИЛИ КНОПКУ РЫНКА СЮДА */}
-              <Link href="/market" className="font-medium hover:text-blue-400 transition-colors">
-                Рынки
-              </Link>
+          {isLoggedIn && (
+            <Link href="/market" className="font-medium hover:text-blue-400 transition-colors">
+              Рынки
+            </Link>
+          )}
 
-              {/* Круглая иконка профиля */}
+          {/* 👇 НОВАЯ КНОПКА: Показывается ТОЛЬКО если пользователь авторизован И он админ */}
+          {isLoggedIn && isAdmin && (
+            <Link 
+              href="/admin/users" 
+              className="bg-amber-600/20 text-amber-400 border border-amber-600/50 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-amber-600 hover:text-white transition-all"
+            >
+              🔑 Админ-панель
+            </Link>
+          )}
+          
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
               <Link 
                 href="/profile" 
                 className="w-10 h-10 bg-slate-700 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors border border-slate-600"

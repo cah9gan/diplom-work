@@ -27,8 +27,8 @@ export * from "./enums.js"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more PasswordResets
- * const passwordResets = await prisma.passwordReset.findMany()
+ * // Fetch zero or more TrackedSymbols
+ * const trackedSymbols = await prisma.trackedSymbol.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -42,6 +42,11 @@ export { Prisma }
 path.join(__dirname, "query_engine-windows.dll.node")
 path.join(process.cwd(), "generated/prisma/query_engine-windows.dll.node")
 
+/**
+ * Model TrackedSymbol
+ * 
+ */
+export type TrackedSymbol = Prisma.TrackedSymbolModel
 /**
  * Model PasswordReset
  * 

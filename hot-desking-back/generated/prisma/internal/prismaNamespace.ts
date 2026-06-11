@@ -390,6 +390,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  TrackedSymbol: 'TrackedSymbol',
   PasswordReset: 'PasswordReset',
   User: 'User'
 } as const
@@ -407,10 +408,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "passwordReset" | "user"
+    modelProps: "trackedSymbol" | "passwordReset" | "user"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    TrackedSymbol: {
+      payload: Prisma.$TrackedSymbolPayload<ExtArgs>
+      fields: Prisma.TrackedSymbolFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TrackedSymbolFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TrackedSymbolFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        findFirst: {
+          args: Prisma.TrackedSymbolFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TrackedSymbolFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        findMany: {
+          args: Prisma.TrackedSymbolFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>[]
+        }
+        create: {
+          args: Prisma.TrackedSymbolCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        createMany: {
+          args: Prisma.TrackedSymbolCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TrackedSymbolCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>[]
+        }
+        delete: {
+          args: Prisma.TrackedSymbolDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        update: {
+          args: Prisma.TrackedSymbolUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        deleteMany: {
+          args: Prisma.TrackedSymbolDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TrackedSymbolUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TrackedSymbolUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>[]
+        }
+        upsert: {
+          args: Prisma.TrackedSymbolUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackedSymbolPayload>
+        }
+        aggregate: {
+          args: Prisma.TrackedSymbolAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTrackedSymbol>
+        }
+        groupBy: {
+          args: Prisma.TrackedSymbolGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedSymbolGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TrackedSymbolCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackedSymbolCountAggregateOutputType> | number
+        }
+      }
+    }
     PasswordReset: {
       payload: Prisma.$PasswordResetPayload<ExtArgs>
       fields: Prisma.PasswordResetFieldRefs
@@ -598,6 +673,18 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const TrackedSymbolScalarFieldEnum = {
+  id: 'id',
+  symbol: 'symbol',
+  name: 'name',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackedSymbolScalarFieldEnum = (typeof TrackedSymbolScalarFieldEnum)[keyof typeof TrackedSymbolScalarFieldEnum]
+
+
 export const PasswordResetScalarFieldEnum = {
   userId: 'userId',
   attempts: 'attempts',
@@ -669,16 +756,9 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Boolean'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -693,6 +773,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -824,6 +918,7 @@ export interface PrismaClientOptions {
   omit?: GlobalOmitConfig
 }
 export type GlobalOmitConfig = {
+  trackedSymbol?: Prisma.TrackedSymbolOmit
   passwordReset?: Prisma.PasswordResetOmit
   user?: Prisma.UserOmit
 }
