@@ -1,8 +1,9 @@
-import { UserRole, UserStatus } from '../../users/dto';
+import { TwoFactorStatus, UserRole, UserStatus } from '../../users/dto';
 
 export type LoginDataDTO = {
   id: string;
   hash: string;
   role: UserRole;
   status: UserStatus;
+  twoFactorStatus: TwoFactorStatus;
 };

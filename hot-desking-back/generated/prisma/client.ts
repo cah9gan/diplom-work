@@ -27,8 +27,8 @@ export * from "./enums.js"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more TrackedSymbols
- * const trackedSymbols = await prisma.trackedSymbol.findMany()
+ * // Fetch zero or more LoginEmails
+ * const loginEmails = await prisma.loginEmail.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -42,6 +42,11 @@ export { Prisma }
 path.join(__dirname, "query_engine-windows.dll.node")
 path.join(process.cwd(), "generated/prisma/query_engine-windows.dll.node")
 
+/**
+ * Model LoginEmail
+ * 
+ */
+export type LoginEmail = Prisma.LoginEmailModel
 /**
  * Model TrackedSymbol
  * 

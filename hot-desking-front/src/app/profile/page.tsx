@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/src/lib/api-client";
 
+// Добавили поле twoFactorStatus
 interface UserProfile {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: string;
+  twoFactorStatus: "active" | "inactive";
 }
 
 export default function ProfilePage() {
@@ -17,189 +19,146 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Состояния для редактирования профиля
+  // Состояния редактирования
   const [isEditing, setIsEditing] = useState(false);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Состояние для сообщений об успехе/ошибке сброса пароля
+  // Состояния безопасности
   const [resetMessage, setResetMessage] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [isUpdating2FA, setIsUpdating2FA] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
     const fetchProfile = async () => {
       try {
         const response = await apiClient.get("/profile");
         setUser(response.data);
-        // Заполняем поля для редактирования текущими данными
         setEditFirstName(response.data.firstName);
         setEditLastName(response.data.lastName);
-      } catch (error) {
-        console.error("Ошибка загрузки профиля", error);
-        localStorage.removeItem("token"); 
-        router.push("/login");            
+      } catch {
+        localStorage.removeItem("token");
+        router.push("/login");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchProfile();
   }, [router]);
 
-  // Функция сохранения нового имени
   const handleSaveProfile = async () => {
     if (!user) return;
     setIsSaving(true);
-    
     try {
-
       await apiClient.patch("/profile", {
         firstName: editFirstName,
         lastName: editLastName,
-        email: user.email, 
+        email: user.email,
       });
-
       setUser({ ...user, firstName: editFirstName, lastName: editLastName });
-      setIsEditing(false); 
-    } catch (error) {
-      console.error("Ошибка при сохранении профиля", error);
+      setIsEditing(false);
+    } catch {
       alert("Не удалось сохранить профиль");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Функция запроса на сброс пароля
+  const handleToggle2FA = async () => {
+    if (!user) return;
+    setIsUpdating2FA(true);
+    
+    const newStatus = user.twoFactorStatus === "active" ? "inactive" : "active";
+    
+    try {
+      await apiClient.patch("/profile/2fa", { status: newStatus });
+      setUser({ ...user, twoFactorStatus: newStatus });
+    } catch {
+      alert("Не удалось обновить настройки 2FA");
+    } finally {
+      setIsUpdating2FA(false);
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!user) return;
     setIsResetting(true);
     setResetMessage("");
-
     try {
-      // Дергаем твой роут POST /profile/reset, который отправляет письмо
-      await apiClient.post("/profile/reset", {
-        email: user.email,
-      });
-      setResetMessage("Письмо со ссылкой для изменения пароля отправлено на вашу почту!");
-    } catch (error) {
-      console.error("Ошибка при запросе сброса пароля", error);
+      await apiClient.post("/profile/reset", { email: user.email });
+      setResetMessage("Ссылка для смены пароля отправлена на почту!");
+    } catch {
       setResetMessage("Произошла ошибка. Попробуйте позже.");
     } finally {
       setIsResetting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <div className="text-xl text-slate-500 animate-pulse">Загрузка профиля...</div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="text-center py-20 animate-pulse">Загрузка...</div>;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Декоративная шапка профиля */}
-        <div className="bg-slate-900 h-32 relative">
-          <div className="absolute -bottom-10 left-8 w-24 h-24 bg-blue-600 rounded-full border-4 border-white flex items-center justify-center text-3xl text-white font-bold shadow-md uppercase">
+    <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="bg-zinc-900/90 backdrop-blur-xl rounded-4xl shadow-2xl shadow-black/50 border border-zinc-800 overflow-hidden">
+        <div className="bg-linear-to-r from-orange-600 via-orange-500 to-yellow-500 h-40 relative">
+          <div className="absolute -bottom-12 left-10 w-28 h-28 bg-zinc-900 rounded-full p-1.5 shadow-lg">
+            <div className="w-full h-full bg-linear-to-br from-orange-500 to-yellow-400 rounded-full flex items-center justify-center text-4xl text-zinc-950 font-black uppercase tracking-tight">
             {user?.firstName?.[0]}{user?.lastName?.[0]}
+            </div>
           </div>
         </div>
         
-        {/* Данные пользователя */}
-        <div className="pt-14 pb-8 px-8">
+        <div className="pt-16 pb-10 px-10">
+          {/* Имя и Роль */}
           <div className="flex justify-between items-start mb-6">
-            <div className="w-full max-w-md">
-              
-              {/* РЕЖИМ ПРОСМОТРА ИЛИ РЕДАКТИРОВАНИЯ */}
+            <div>
               {isEditing ? (
-                <div className="flex flex-col gap-3 mb-2">
-                  <input 
-                    type="text" 
-                    value={editFirstName} 
-                    onChange={(e) => setEditFirstName(e.target.value)}
-                    className="border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500"
-                    placeholder="Имя"
-                  />
-                  <input 
-                    type="text" 
-                    value={editLastName} 
-                    onChange={(e) => setEditLastName(e.target.value)}
-                    className="border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500"
-                    placeholder="Фамилия"
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <button 
-                      onClick={handleSaveProfile}
-                      disabled={isSaving}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors text-sm"
-                    >
-                      {isSaving ? "Сохранение..." : "Сохранить"}
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditFirstName(user?.firstName || "");
-                        setEditLastName(user?.lastName || "");
-                      }}
-                      className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
-                    >
-                      Отмена
-                    </button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="border border-zinc-700 bg-zinc-950 text-white px-3 py-2 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none w-40" />
+                    <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="border border-zinc-700 bg-zinc-950 text-white px-3 py-2 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none w-40" />
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <button onClick={handleSaveProfile} disabled={isSaving} className="bg-orange-500 hover:bg-orange-600 text-zinc-950 text-sm font-bold px-4 py-2 rounded-lg transition-colors">Сохранить</button>
+                    <button onClick={() => setIsEditing(false)} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">Отмена</button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-bold text-slate-900">
-                    {user?.firstName} {user?.lastName}
-                  </h1>
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="text-slate-400 hover:text-blue-600 transition-colors"
-                    title="Редактировать профиль"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-                    </svg>
+                <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                  {user?.firstName} {user?.lastName} 
+                  <button onClick={() => setIsEditing(true)} className="text-zinc-600 hover:text-orange-400 transition-colors" title="Редактировать">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" /></svg>
                   </button>
-                </div>
+                </h1>
               )}
-
-              <p className="text-slate-500 mt-1">{user?.email}</p>
+              <p className="text-zinc-400 mt-1 text-lg">{user?.email}</p>
             </div>
-            
-            <span className="bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase">
-              {user?.role}
-            </span>
+            <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">{user?.role}</span>
           </div>
 
-          <div className="border-t border-slate-100 pt-6 mt-6">
-            <h2 className="text-lg font-bold mb-4">Безопасность</h2>
+          {/* Безопасность */}
+          <div className="border-t border-zinc-800/80 pt-8 mt-4">
+            <h2 className="text-xl font-bold text-white mb-5">Безопасность</h2>
             
-            <button 
-              onClick={handleResetPassword}
-              disabled={isResetting}
-              className="text-blue-600 hover:text-blue-800 font-medium transition-colors disabled:text-gray-400"
-            >
-              {isResetting ? "Отправка..." : "Отправить ссылку для смены пароля"}
-            </button>
-            
-            {/* Сообщение после нажатия на кнопку сброса */}
-            {resetMessage && (
-              <p className={`mt-2 text-sm ${resetMessage.includes("ошибка") ? "text-red-600" : "text-green-600"}`}>
-                {resetMessage}
-              </p>
-            )}
+            {/* Переключатель 2FA */}
+            <div className="flex items-center justify-between p-5 bg-zinc-950/50 rounded-2xl border border-zinc-800 mb-5">
+              <div>
+                <p className="font-semibold text-zinc-200">Двухфакторная аутентификация</p>
+                <p className="text-sm text-zinc-500 mt-0.5">{user?.twoFactorStatus === 'active' ? 'Дополнительная защита включена' : 'Повысьте безопасность аккаунта'}</p>
+              </div>
+              <button 
+                onClick={handleToggle2FA}
+                disabled={isUpdating2FA}
+                className={`relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:ring-orange-500 ${user?.twoFactorStatus === 'active' ? 'bg-orange-500' : 'bg-zinc-700'}`}
+              >
+                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${user?.twoFactorStatus === 'active' ? 'translate-x-8' : 'translate-x-1'}`} />
+              </button>
+            </div>
 
+            <button onClick={handleResetPassword} disabled={isResetting} className="text-orange-400 font-medium hover:text-orange-300 transition-colors">
+              {isResetting ? "Отправка..." : "Сбросить пароль"}
+            </button>
+            {resetMessage && <p className="mt-3 text-sm text-green-400 bg-green-500/10 p-3 rounded-xl border border-green-500/20">{resetMessage}</p>}
           </div>
         </div>
       </div>

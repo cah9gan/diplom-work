@@ -49,6 +49,7 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 
 export const ModelName = {
+  LoginEmail: 'LoginEmail',
   TrackedSymbol: 'TrackedSymbol',
   PasswordReset: 'PasswordReset',
   User: 'User'
@@ -68,6 +69,17 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const LoginEmailScalarFieldEnum = {
+  userId: 'userId',
+  attempts: 'attempts',
+  code: 'code',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type LoginEmailScalarFieldEnum = (typeof LoginEmailScalarFieldEnum)[keyof typeof LoginEmailScalarFieldEnum]
 
 
 export const TrackedSymbolScalarFieldEnum = {
@@ -102,7 +114,8 @@ export const UserScalarFieldEnum = {
   hash: 'hash',
   status: 'status',
   createdAt: 'createdAt',
-  createdBy: 'createdBy'
+  createdBy: 'createdBy',
+  twoFactorStatus: 'twoFactorStatus'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]

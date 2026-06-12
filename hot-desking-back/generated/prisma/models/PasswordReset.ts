@@ -356,14 +356,6 @@ export type PasswordResetNullableScalarRelationFilter = {
   isNot?: Prisma.PasswordResetWhereInput | null
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type PasswordResetCreateNestedOneWithoutUserInput = {
   create?: Prisma.XOR<Prisma.PasswordResetCreateWithoutUserInput, Prisma.PasswordResetUncheckedCreateWithoutUserInput>
   connectOrCreate?: Prisma.PasswordResetCreateOrConnectWithoutUserInput

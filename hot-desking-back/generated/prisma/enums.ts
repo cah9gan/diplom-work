@@ -23,3 +23,11 @@ export const UserStatus = {
 } as const
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
+export const TwoFactorStatus = {
+  active: 'active',
+  inactive: 'inactive'
+} as const
+
+export type TwoFactorStatus = (typeof TwoFactorStatus)[keyof typeof TwoFactorStatus]

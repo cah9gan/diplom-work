@@ -1,11 +1,16 @@
 import { config, Hasher } from '../common';
 import { PrismaService } from '../prisma';
-import { UserStatus } from '../users/dto';
+import { TwoFactorStatus, UserStatus } from '../users/dto';
 import { mapUserRoleFromDb, mapUserStatusFromDb } from '../users/mappers';
-import { AccessDTO, LoginDataDTO, loginDTO } from './dto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AccessDTO, LoginDataDTO, loginDTO, VerifyCodeDTO } from './dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserJWT } from './models';
 import { ProfileService } from '../users';
+import { LoginCodeEmailService } from '../email';
 
 const ERROR_MESSAGE = 'Wrongh email or password';
 
@@ -19,9 +24,16 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profile: ProfileService,
+    private readonly loginEmailService: LoginCodeEmailService, // 👈 Внедряем сервис писем
   ) {}
 
-  public async login(data: loginDTO): Promise<AccessDTO> {
+  // Шаг 1: Проверка пароля и отправка кода
+  public async login(
+    data: loginDTO,
+  ): Promise<
+    | { message: string; requires2FA: true }
+    | (AccessDTO & { requires2FA: false })
+  > {
     const user = await this.retrieveForLogin(data.email);
     this.checkLoginPermission(user);
 
@@ -30,8 +42,82 @@ export class AuthService {
       throw new UnauthorizedException(ERROR_MESSAGE);
     }
 
+    // Подтягиваем профиль, чтобы использовать имя юзера в красивом HTML-письме
+    const profile = await this.profile.getSelf(user.id);
+
+    if (user.twoFactorStatus === TwoFactorStatus.Inactive) {
+      // 2FA выключена -> отдаем JWT сразу (старое поведение)
+      const token = await this.jwt.sign(user.id, user.role);
+      return {
+        ...profile,
+        token,
+        requires2FA: false, // Фронтенд поймет, что код не нужен
+      };
+    }
+
+    // Генерируем 6 цифр
+    const rawCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Хешируем код через твой утилитный класс (предполагается, что в Hasher есть метод hash)
+    const hashedCode = await Hasher.hash(rawCode);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 минут жизни
+
+    // Сохраняем или обновляем код в базе данных
+    await this.prisma.loginEmail.upsert({
+      where: { userId: user.id },
+      update: { code: hashedCode, expiresAt, attempts: 0 },
+      create: { userId: user.id, code: hashedCode, expiresAt },
+    });
+
+    // Отправляем письмо с сырым (не захешированным) кодом
+    await this.loginEmailService.send({
+      email: data.email,
+      name: profile.firstName,
+      code: rawCode,
+    });
+
+    // Отвечаем фронтенду, что токена пока нет, нужно переключиться на окно ввода кода
+    return {
+      message: 'Код підтвердження відправлено на пошту',
+      requires2FA: true,
+    };
+  }
+
+  // Шаг 2: Проверка кода и финальная выдача JWT
+  public async verifyCode(data: VerifyCodeDTO): Promise<AccessDTO> {
+    const user = await this.retrieveForLogin(data.email);
+    this.checkLoginPermission(user);
+
+    // Достаем запись о запрошенном коде
+    const loginRecord = await this.prisma.loginEmail.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!loginRecord) {
+      throw new BadRequestException('Запит на авторизацію не знайдено');
+    }
+
+    // Проверяем срок действия (10 минут)
+    if (new Date() > loginRecord.expiresAt) {
+      await this.prisma.loginEmail.delete({ where: { userId: user.id } });
+      throw new BadRequestException(
+        'Термін дії коду минув. Спробуйте увійти ще раз.',
+      );
+    }
+
+    // Сверяем введенный код с хешем в БД
+    const isCodeValid = await Hasher.verify(loginRecord.code, data.code);
+    if (!isCodeValid) {
+      throw new UnauthorizedException('Невірний код підтвердження');
+    }
+
+    // Если всё прошло успешно, удаляем код из базы, чтобы его нельзя было использовать дважды
+    await this.prisma.loginEmail.delete({ where: { userId: user.id } });
+
+    // Генерируем токен и отдаем данные профиля (ровно то, что раньше делал метод login)
     const token = await this.jwt.sign(user.id, user.role);
     const profile = await this.profile.getSelf(user.id);
+
     return {
       ...profile,
       token,
@@ -48,6 +134,7 @@ export class AuthService {
         hash: true,
         role: true,
         status: true,
+        twoFactorStatus: true,
       },
     });
     if (!data || !data.hash) {
@@ -59,6 +146,7 @@ export class AuthService {
       hash: data.hash,
       role: mapUserRoleFromDb(data.role),
       status: mapUserStatusFromDb(data.status),
+      twoFactorStatus: data.twoFactorStatus as TwoFactorStatus, // 👈 Добавь эту строчку
     };
   }
 

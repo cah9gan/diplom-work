@@ -5,6 +5,8 @@ export * from './password-reset-code.dto';
 export * from './user-role';
 export * from './reset-password.dto';
 export * from './set-password.dto';
+export * from './two-factor-status.dto';
+export * from './update-two-factor.dto';
 export * from './user-status.dto';
 export * from './view-profile.dto';
 export * from './view-user.dto';

@@ -1,3 +1,4 @@
+import { TwoFactorStatus } from './two-factor-status.dto';
 import { UserRole } from './user-role';
 
 export class ViewProfileDTO {
@@ -10,4 +11,6 @@ export class ViewProfileDTO {
   lastName: string;
 
   email: string;
+
+  twoFactorStatus: TwoFactorStatus;
 }

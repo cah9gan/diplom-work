@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ChangeProfileDTO, SetPasswordDTO, ViewProfileDTO } from './dto';
+import {
+  ChangeProfileDTO,
+  SetPasswordDTO,
+  TwoFactorStatus,
+  ViewProfileDTO,
+} from './dto';
 import { PasswordResetService } from './password-reset.service';
 import { PrismaService } from '../prisma';
 import { UserStatus } from '../../generated/prisma/enums';
@@ -28,6 +33,7 @@ export class ProfileService {
         firstName: true,
         lastName: true,
         email: true,
+        twoFactorStatus: true,
       },
     });
 
@@ -40,6 +46,7 @@ export class ProfileService {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      twoFactorStatus: user.twoFactorStatus as TwoFactorStatus,
     };
   }
 
@@ -87,5 +94,12 @@ export class ProfileService {
     if (!user) return;
 
     await this.changeProfileService.changeName(userId, data);
+  }
+
+  public async changeTwoFactorStatus(
+    userId: string,
+    status: TwoFactorStatus,
+  ): Promise<void> {
+    await this.changeProfileService.changeTwoFactorStatus(userId, status);
   }
 }

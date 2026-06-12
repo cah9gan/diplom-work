@@ -390,6 +390,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 
 export const ModelName = {
+  LoginEmail: 'LoginEmail',
   TrackedSymbol: 'TrackedSymbol',
   PasswordReset: 'PasswordReset',
   User: 'User'
@@ -408,10 +409,84 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "trackedSymbol" | "passwordReset" | "user"
+    modelProps: "loginEmail" | "trackedSymbol" | "passwordReset" | "user"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
+    LoginEmail: {
+      payload: Prisma.$LoginEmailPayload<ExtArgs>
+      fields: Prisma.LoginEmailFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LoginEmailFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LoginEmailFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        findFirst: {
+          args: Prisma.LoginEmailFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LoginEmailFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        findMany: {
+          args: Prisma.LoginEmailFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>[]
+        }
+        create: {
+          args: Prisma.LoginEmailCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        createMany: {
+          args: Prisma.LoginEmailCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LoginEmailCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>[]
+        }
+        delete: {
+          args: Prisma.LoginEmailDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        update: {
+          args: Prisma.LoginEmailUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        deleteMany: {
+          args: Prisma.LoginEmailDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LoginEmailUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LoginEmailUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>[]
+        }
+        upsert: {
+          args: Prisma.LoginEmailUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LoginEmailPayload>
+        }
+        aggregate: {
+          args: Prisma.LoginEmailAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLoginEmail>
+        }
+        groupBy: {
+          args: Prisma.LoginEmailGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginEmailGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LoginEmailCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LoginEmailCountAggregateOutputType> | number
+        }
+      }
+    }
     TrackedSymbol: {
       payload: Prisma.$TrackedSymbolPayload<ExtArgs>
       fields: Prisma.TrackedSymbolFieldRefs
@@ -673,6 +748,17 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+export const LoginEmailScalarFieldEnum = {
+  userId: 'userId',
+  attempts: 'attempts',
+  code: 'code',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+} as const
+
+export type LoginEmailScalarFieldEnum = (typeof LoginEmailScalarFieldEnum)[keyof typeof LoginEmailScalarFieldEnum]
+
+
 export const TrackedSymbolScalarFieldEnum = {
   id: 'id',
   symbol: 'symbol',
@@ -705,7 +791,8 @@ export const UserScalarFieldEnum = {
   hash: 'hash',
   status: 'status',
   createdAt: 'createdAt',
-  createdBy: 'createdBy'
+  createdBy: 'createdBy',
+  twoFactorStatus: 'twoFactorStatus'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -756,9 +843,16 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'Boolean'
+ * Reference to a field of type 'Int'
  */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 
@@ -777,16 +871,9 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Boolean'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -815,6 +902,20 @@ export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
  * Reference to a field of type 'UserStatus[]'
  */
 export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TwoFactorStatus'
+ */
+export type EnumTwoFactorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TwoFactorStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'TwoFactorStatus[]'
+ */
+export type ListEnumTwoFactorStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TwoFactorStatus[]'>
     
 
 
@@ -918,6 +1019,7 @@ export interface PrismaClientOptions {
   omit?: GlobalOmitConfig
 }
 export type GlobalOmitConfig = {
+  loginEmail?: Prisma.LoginEmailOmit
   trackedSymbol?: Prisma.TrackedSymbolOmit
   passwordReset?: Prisma.PasswordResetOmit
   user?: Prisma.UserOmit

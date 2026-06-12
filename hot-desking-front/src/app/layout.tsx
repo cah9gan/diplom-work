@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col`}>
+      <body className={`${inter.className} bg-linear-to-br from-zinc-950 to-zinc-900 text-zinc-100 min-h-screen flex flex-col selection:bg-orange-500/30 selection:text-orange-200`}>
         {/* Шапка будет на всех страницах */}
         <Header />
         

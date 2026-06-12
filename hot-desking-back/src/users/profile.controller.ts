@@ -13,6 +13,7 @@ import {
   ChangeProfileDTO,
   ResetPasswordDTO,
   SetPasswordDTO,
+  UpdateTwoFactorDTO,
   ViewProfileDTO,
 } from './dto';
 import { AccessGuard, SWAGGER_BEARER_NAME, User } from '../common';
@@ -51,5 +52,16 @@ export class ProfileController {
     @Body() data: ChangeProfileDTO,
   ): Promise<void> {
     return this.profileService.changeProfile(user.userId, data);
+  }
+
+  @Patch('2fa')
+  @UseGuards(AccessGuard)
+  @ApiBearerAuth(SWAGGER_BEARER_NAME)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updateTwoFactor(
+    @User() user: JWTUser,
+    @Body() data: UpdateTwoFactorDTO,
+  ): Promise<void> {
+    return this.profileService.changeTwoFactorStatus(user.userId, data.status);
   }
 }

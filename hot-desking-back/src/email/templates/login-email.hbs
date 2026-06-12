@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Код підтвердження для входу</title>
+    <style type="text/css">
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        body {
+            margin: 0; padding: 0;
+            background-color: #f4f5f7;
+            font-family: Arial, sans-serif;
+            min-width: 100%;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper { background-color: #f4f5f7; padding: 40px 20px; }
+        .container {
+            max-width: 600px; margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px; border: 1px solid #e0e0e0;
+        }
+        .header {
+            padding: 40px 40px 20px;
+            border-bottom: 1px solid #eeeeee;
+            text-align: center;
+        }
+        .title { margin: 0; font-size: 24px; color: #1a1a1a; }
+        .content { padding: 40px; }
+        .text { margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #333333; }
+        
+        /* Стили для блока с кодом */
+        .code-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #0066cc;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .code-number {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 36px;
+            font-weight: bold;
+            color: #0066cc;
+            letter-spacing: 8px;
+            margin: 0;
+        }
+
+        .alert-box { margin-bottom: 30px; background-color: #fff8e1; width: 100%; }
+        .alert-accent { width: 4px; background-color: #ffc107; font-size: 0; line-height: 0; }
+        .alert-text { padding: 16px; font-size: 14px; line-height: 21px; color: #856404; }
+        .footer {
+            padding: 24px 40px;
+            background-color: #fafafa;
+            border-top: 1px solid #eeeeee;
+            text-align: center;
+        }
+        .footer-text { margin: 0 0 10px 0; font-size: 13px; line-height: 18px; color: #999999; }
+    </style>
+</head>
+<body>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="wrapper">
+        <tr>
+            <td align="center">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" class="container">
+                    <tr>
+                        <td class="header">
+                            <h1 class="title">Авторизація 🔐</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content">
+                            <p class="text">Вітаємо, <strong>{{name}}</strong>!</p>
+                            <p class="text">Ми отримали запит на вхід у ваш акаунт. Для продовження введіть цей код підтвердження на сайті:</p>
+                            
+                            <div class="code-box">
+                                <p class="code-number">{{code}}</p>
+                            </div>
+                            
+                            <table border="0" cellpadding="0" cellspacing="0" class="alert-box">
+                                <tr>
+                                    <td class="alert-accent">&nbsp;</td>
+                                    <td class="alert-text">
+                                        ⏳ <strong>Зверніть увагу:</strong> Цей код дійсний лише 10 хвилин. Нікому не передавайте його!
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p class="text" style="font-size: 14px; color: #666;">Якщо ви не намагалися увійти в систему, просто проігноруйте цей лист або змініть пароль для безпеки.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="footer">
+                            <p class="footer-text">Це автоматичне повідомлення, будь ласка, не відповідайте на нього.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

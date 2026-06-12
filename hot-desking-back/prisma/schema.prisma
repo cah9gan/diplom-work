@@ -23,6 +23,24 @@ enum UserStatus {
   @@map("user_status")
 }
 
+enum TwoFactorStatus {
+  active
+  inactive
+
+  @@map("two_factor_status")
+}
+
+model LoginEmail {
+  userId    String   @id @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts  Int      @default(0) @db.Integer
+  code      String   @db.VarChar()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+
+  @@map("login_email")
+}
+
 model TrackedSymbol {
   id        String   @id @default(uuid()) @db.Uuid
   symbol    String   @unique @db.VarChar()
@@ -46,17 +64,19 @@ model PasswordReset {
 }
 
 model User {
-  id        String     @id @db.Uuid
-  role      UserRole
-  firstName String     @map("first_name") @db.VarChar()
-  lastName  String     @map("last_name") @db.VarChar()
-  email     String     @unique @db.VarChar()
-  hash      String?    @db.VarChar()
-  status    UserStatus @map("user_status")
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz()
-  createdBy String     @map("created_by") @db.Uuid
+  id              String          @id @db.Uuid
+  role            UserRole
+  firstName       String          @map("first_name") @db.VarChar()
+  lastName        String          @map("last_name") @db.VarChar()
+  email           String          @unique @db.VarChar()
+  hash            String?         @db.VarChar()
+  status          UserStatus      @map("user_status")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  createdBy       String          @map("created_by") @db.Uuid
+  twoFactorStatus TwoFactorStatus @default(active) @map("two_factor_status")
 
   passwordResets PasswordReset?
+  loginEmail     LoginEmail?
 
   @@map("user")
 }

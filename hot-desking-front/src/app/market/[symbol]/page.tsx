@@ -59,8 +59,8 @@ const RANGE_OPTIONS: Record<string, { label: string; seconds: number | "ALL" }[]
 const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPrediction | null, isLoading: boolean }) => {
   if (isLoading) {
     return (
-      <div className="flex items-center gap-4 px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 animate-pulse">
-        <div className="h-10 w-32 bg-slate-200 rounded"></div>
+      <div className="flex items-center gap-4 px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-950/50 animate-pulse">
+        <div className="h-10 w-32 bg-zinc-800 rounded"></div>
       </div>
     );
   }
@@ -68,9 +68,9 @@ const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPred
   if (!prediction) return null;
   
   const config = {
-    up: { color: "text-green-600 bg-green-50 border-green-200", icon: "↑", label: "ПРОГНОЗ РОСТА" },
-    down: { color: "text-red-600 bg-red-50 border-red-200", icon: "↓", label: "ПРОГНОЗ ПАДЕНИЯ" },
-    neutral: { color: "text-slate-600 bg-slate-50 border-slate-200", icon: "→", label: "ФЛЭТ / НЕЙТРАЛЬНО" }
+    up: { color: "text-green-400 bg-green-500/10 border-green-500/20", icon: "↑", label: "ПРОГНОЗ РОСТА" },
+    down: { color: "text-red-400 bg-red-500/10 border-red-500/20", icon: "↓", label: "ПРОГНОЗ ПАДЕНИЯ" },
+    neutral: { color: "text-zinc-400 bg-zinc-800/50 border-zinc-700", icon: "→", label: "ФЛЭТ / НЕЙТРАЛЬНО" }
   };
 
   const currentConf = config[prediction.trend];
@@ -103,12 +103,10 @@ export default function CoinPage() {
   const [prediction, setPrediction] = useState<MarketPrediction | null>(null);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   
-  // 👇 Разделенные состояния: одно для графика, другое для ИИ
   const [activeInterval, setActiveInterval] = useState<string>("1d");
   const [aiInterval, setAiInterval] = useState<string>("1d");
   const [activeRange, setActiveRange] = useState<string>("ALL");
   
-  // Используем ref, чтобы вебсокет знал текущий ИИ-интервал без переподключения
   const aiIntervalRef = useRef(aiInterval);
   useEffect(() => {
     aiIntervalRef.current = aiInterval;
@@ -124,8 +122,8 @@ export default function CoinPage() {
     if (!chartContainerRef.current) return;
 
     const chart = createChart(chartContainerRef.current, {
-      layout: { background: { color: "transparent" }, textColor: "#64748b" },
-      grid: { vertLines: { color: "#f1f5f9" }, horzLines: { color: "#f1f5f9" } },
+      layout: { background: { color: "transparent" }, textColor: "#a1a1aa" },
+      grid: { vertLines: { color: "#27272a" }, horzLines: { color: "#27272a" } },
       width: chartContainerRef.current.clientWidth,
       height: 500,
       timeScale: { timeVisible: true, secondsVisible: false },
@@ -176,7 +174,7 @@ export default function CoinPage() {
     }
   }, [prediction, aiInterval]);
 
-  // 👇 ЭФФЕКТ 3: Загрузка ИИ-прогноза (зависит ТОЛЬКО от aiInterval)
+  // ЭФФЕКТ 3: Загрузка ИИ-прогноза
   useEffect(() => {
     const fetchPrediction = async () => {
       try {
@@ -202,7 +200,7 @@ export default function CoinPage() {
     fetchPrediction();
   }, [symbol, aiInterval]);
 
-  // 👇 ЭФФЕКТ 4: Загрузка Графика и WebSocket (зависит ТОЛЬКО от activeInterval)
+  // 👇 ЭФФЕКТ 4: ИСПРАВЛЕННАЯ Загрузка Графика и WebSocket
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current) return;
 
@@ -218,10 +216,26 @@ export default function CoinPage() {
 
         if (historyRes.ok) {
           const data = await historyRes.json();
-          const formattedData = data.map((item: StreamKline) => ({
-            ...item,
-            time: Math.floor(item.time / 1000) as Time
-          }));
+          
+          // МАГИЯ: Умное исправление времени (отрезаем миллисекунды только если они есть)
+          let formattedData = data.map((item: StreamKline) => {
+            const correctTime = item.time > 10000000000 
+              ? Math.floor(item.time / 1000) 
+              : Math.floor(item.time);
+
+            return {
+              ...item,
+              time: correctTime as Time
+            };
+          });
+
+          // Сортируем от старых свечей к новым (чтобы график не ломался)
+          formattedData.sort((a: StreamKline, b: StreamKline) => (a.time as number) - (b.time as number));
+
+          // Удаляем дубликаты времени (если биржа случайно отдала две одинаковые свечи)
+          formattedData = formattedData.filter((item: StreamKline, index: number, array: StreamKline[]) => 
+            index === 0 || item.time !== array[index - 1].time
+          );
 
           if (seriesRef.current && chartRef.current) {
             seriesRef.current.setData(formattedData);
@@ -244,14 +258,18 @@ export default function CoinPage() {
       if (data.symbol.toLowerCase() === symbol.toLowerCase() && data.interval === activeInterval) {
         setCurrentPrice(data.kline.close);
         
-        // Обновляем ИИ из сокета ТОЛЬКО если таймфрейм сокета совпадает с таймфреймом, который выбран для ИИ
         if (data.prediction && activeInterval === aiIntervalRef.current) {
           setPrediction(data.prediction);
         }
         
         if (seriesRef.current) {
+          // Умное исправление времени для WebSocket
+          const correctSocketTime = data.kline.time > 10000000000 
+            ? Math.floor(data.kline.time / 1000) 
+            : Math.floor(data.kline.time);
+
           seriesRef.current.update({
-            time: Math.floor(data.kline.time / 1000) as Time, 
+            time: correctSocketTime as Time, 
             open: data.kline.open,
             high: data.kline.high,
             low: data.kline.low,
@@ -282,34 +300,33 @@ export default function CoinPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <Link href="/market" className="text-blue-600 hover:underline mb-6 inline-block">
+      <Link href="/market" className="text-orange-400 hover:text-orange-300 font-bold transition-colors mb-6 inline-block">
         &larr; Назад к списку
       </Link>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 border-b border-slate-100 pb-4 gap-6">
+      <div className="bg-zinc-900/80 backdrop-blur-xl rounded-4xl shadow-2xl shadow-black/50 border border-zinc-800 p-6 sm:p-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 border-b border-zinc-800/80 pb-6 gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold uppercase tracking-wide">
+            <h1 className="text-3xl font-extrabold uppercase tracking-wide text-white">
               {symbol.replace("usdt", " / USDT")}
             </h1>
             <div className="flex items-center gap-6">
               {currentPrice ? (
-                <div className="text-4xl font-bold text-slate-900 tracking-tight">
+                <div className="text-4xl font-black text-white tracking-tight">
                   ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                 </div>
               ) : (
-                <div className="animate-pulse bg-slate-200 h-10 w-32 rounded"></div>
+                <div className="animate-pulse bg-zinc-800 h-10 w-32 rounded"></div>
               )}
               
               <AiPredictionDisplay prediction={prediction} isLoading={isAiLoading} />
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {/* 👇 НОВЫЙ БЛОК: Кнопки для управления ИИ */}
+          <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider w-24">Прогноз ИИ:</span>
-              <div className="flex bg-indigo-50 p-1 rounded-lg border border-indigo-100">
+              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider w-24">Прогноз ИИ:</span>
+              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
                 {[
                   { label: '15 Мин', value: '15m' },
                   { label: '1 Час', value: '1h' },
@@ -318,10 +335,10 @@ export default function CoinPage() {
                   <button
                     key={interval.value}
                     onClick={() => setAiInterval(interval.value)}
-                    className={`px-4 py-1.5 text-sm font-bold rounded-md transition-all ${
+                    className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${
                       aiInterval === interval.value
-                        ? 'bg-white text-indigo-600 shadow-sm border border-indigo-200'
-                        : 'text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100/50'
+                        ? 'bg-orange-500 text-zinc-950 shadow-md shadow-orange-500/20'
+                        : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-800'
                     }`}
                   >
                     {interval.label}
@@ -330,10 +347,9 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* БЛОК: Таймфрейм графика */}
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">График:</span>
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-24">График:</span>
+              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
                 {[
                   { label: '1 Мин', value: '1m' },
                   { label: '15 Мин', value: '15m' },
@@ -343,10 +359,10 @@ export default function CoinPage() {
                   <button
                     key={interval.value}
                     onClick={() => setActiveInterval(interval.value)}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
                       activeInterval === interval.value
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        ? 'bg-zinc-800 text-white shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
                     }`}
                   >
                     {interval.label}
@@ -355,18 +371,17 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* БЛОК: Масштаб */}
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider w-24">Масштаб:</span>
-              <div className="flex bg-slate-100 p-1 rounded-lg">
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-24">Масштаб:</span>
+              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
                 {(RANGE_OPTIONS[activeInterval] || RANGE_OPTIONS["1d"]).map((range) => (
                   <button
                     key={range.label}
                     onClick={() => setTimeRange(range.seconds)}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                    className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
                       activeRange === String(range.seconds)
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        ? 'bg-zinc-800 text-white shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
                     }`}
                   >
                     {range.label}
@@ -379,7 +394,7 @@ export default function CoinPage() {
 
         <div 
           ref={chartContainerRef} 
-          className="w-full h-125 rounded-xl overflow-hidden"
+          className="w-full h-125 rounded-2xl overflow-hidden border border-zinc-800/50"
         />
       </div>
     </div>
