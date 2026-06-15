@@ -49,7 +49,7 @@ export default function AdminSymbolsPage() {
     setSuccess("");
 
     if (!newSymbol.trim()) {
-      setError("Символ монеты обязателен");
+      setError("Символ монети обов'язковий");
       setIsLoading(false);
       return;
     }
@@ -70,10 +70,10 @@ export default function AdminSymbolsPage() {
 
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Ошибка при добавлении монеты");
+        throw new Error(errData.message || "Помилка при додаванні монети");
       }
 
-      setSuccess(`Монета ${newSymbol.toUpperCase()} успешно добавлена!`);
+      setSuccess(`Монета ${newSymbol.toUpperCase()} успішно додана!`);
       setNewSymbol("");
       setNewName("");
       loadData(); 
@@ -81,7 +81,7 @@ export default function AdminSymbolsPage() {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Произошла неизвестная ошибка");
+        setError("Виникла невідома помилка");
       }
     } finally {
       setIsLoading(false);
@@ -90,7 +90,7 @@ export default function AdminSymbolsPage() {
 
   // 👇 НОВАЯ ФУНКЦИЯ: Обработчик удаления монеты
   const handleDelete = async (symbolToDelete: string) => {
-    if (!confirm(`Вы уверены, что хотите прекратить отслеживание ${symbolToDelete}?`)) return;
+    if (!confirm(`Ви впевнені, що хочете припинити відстеження ${symbolToDelete}?`)) return;
     
     try {
       const token = localStorage.getItem("token");
@@ -102,9 +102,9 @@ export default function AdminSymbolsPage() {
       if (response.ok) {
         // Убираем из стейта локально или просто перезапрашиваем данные
         loadData();
-        setSuccess(`Монета ${symbolToDelete} удалена.`);
+        setSuccess(`Монета ${symbolToDelete} видалена.`);
       } else {
-        alert("Ошибка при удалении монеты");
+        alert("Помилка при видаленні монети");
       }
     } catch (err) {
       console.error("Ошибка удаления", err);
@@ -114,19 +114,19 @@ export default function AdminSymbolsPage() {
   return (
     <div className="max-w-5xl mx-auto py-8">
       <div className="mb-10 text-center md:text-left">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Управление рынками</h1>
-        <p className="text-zinc-400">Добавляйте или удаляйте криптовалютные пары для отслеживания.</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Управління ринками</h1>
+        <p className="text-zinc-400">Додавайте або видаляйте криптовалютні пари для відстеження.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Форма добавления */}
         <div className="lg:col-span-5 bg-zinc-900/80 backdrop-blur-md rounded-4xl shadow-xl shadow-black/30 border border-zinc-800 p-8 self-start">
-          <h2 className="text-xl font-bold text-zinc-100 mb-6 flex items-center gap-2"><span className="text-2xl">✨</span> Добавить новую пару</h2>
+          <h2 className="text-xl font-bold text-zinc-100 mb-6 flex items-center gap-2"><span className="text-2xl">✨</span> Додати нову пару</h2>
           
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Торговая пара (напр. ADAUSDT)
+                Торгова пара (напр. ADAUSDT)
               </label>
               <input
                 type="text"
@@ -134,7 +134,7 @@ export default function AdminSymbolsPage() {
                 onChange={(e) => setNewSymbol(e.target.value.toLowerCase())}
                 list="binance-symbols"
                 className="w-full px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-950/50 text-white focus:bg-zinc-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none uppercase transition-all placeholder:text-zinc-600"
-                placeholder="Начните вводить..."
+                placeholder="Почніть вводити..."
                 required
               />
               <datalist id="binance-symbols">
@@ -147,7 +147,7 @@ export default function AdminSymbolsPage() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-                Понятное название (Опционально)
+                Зрозуміла назва (Опціонально)
               </label>
               <input
                 type="text"
@@ -166,7 +166,7 @@ export default function AdminSymbolsPage() {
               disabled={isLoading || !newSymbol.trim()}
               className="mt-2 w-full bg-linear-to-r from-orange-500 to-yellow-500 hover:from-orange-400 hover:to-yellow-400 text-zinc-950 font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-orange-500/20 disabled:opacity-70 disabled:hover:shadow-md disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500"
             >
-              {isLoading ? "Добавление..." : "Добавить пару"}
+              {isLoading ? "Додавання..." : "Додати пару"}
             </button>
           </form>
         </div>
@@ -174,14 +174,14 @@ export default function AdminSymbolsPage() {
         {/* Список текущих монет */}
         <div className="lg:col-span-7 bg-zinc-900/80 backdrop-blur-md rounded-4xl shadow-xl shadow-black/30 border border-zinc-800 p-8 self-start">
           <h2 className="text-xl font-bold text-zinc-100 mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2"><span className="text-2xl">📈</span> Отслеживаемые рынки</div>
+            <div className="flex items-center gap-2"><span className="text-2xl">📈</span> Відстежувані ринки</div>
             <span className="bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm py-1 px-3 rounded-full font-bold">{activeSymbols.length}</span>
           </h2>
           
           <div className="overflow-y-auto max-h-150 pr-2 custom-scrollbar">
             {activeSymbols.length === 0 ? (
               <div className="text-center py-12 px-4 border-2 border-dashed border-zinc-700 rounded-2xl">
-                <p className="text-zinc-500">Нет отслеживаемых монет.</p>
+                <p className="text-zinc-500">Немає відстежуваних монет.</p>
               </div>
             ) : (
               <ul className="flex flex-col gap-3">
@@ -197,14 +197,14 @@ export default function AdminSymbolsPage() {
                     <div className="flex items-center gap-4">
                       <span className="text-xs bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        Активен
+                        Активний
                       </span>
                       
                       {/* 👇 Кнопка удаления */}
                       <button 
                         onClick={() => handleDelete(symbol)}
                         className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                        title="Удалить монету"
+                        title="Видалити монету"
                         type="button"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">

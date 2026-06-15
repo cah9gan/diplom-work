@@ -134,11 +134,11 @@ export default function MarketPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Рынки</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Ринки</h1>
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
           <span className="text-sm text-zinc-400 font-bold">
-            {isConnected ? 'LIVE' : 'Подключение...'}
+            {isConnected ? 'LIVE' : 'Підключення...'}
           </span>
         </div>
       </div>
@@ -169,8 +169,22 @@ export default function MarketPage() {
               
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                  <div className="font-extrabold text-xl tracking-wide uppercase text-white group-hover:text-orange-400 transition-colors">
-                    {coin.symbol.replace('USDT', ' / USDT')}
+                  {/* 👇 Обернули иконку и текст во flex-контейнер */}
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      // Вырезаем 'USDT', переводим в нижний регистр (BTCUSDT -> btc) и подставляем в ссылку
+                      src={`https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/svg/color/${coin.symbol.replace(/USDT/i, '').toLowerCase()}.svg`} 
+                      alt={coin.symbol}
+                      className="w-8 h-8 rounded-full drop-shadow-md"
+                      onError={(e) => {
+                        // Если какой-то редкой монеты нет в базе, показываем универсальную заглушку, чтобы дизайн не ломался
+                        (e.target as HTMLImageElement).src = "https://cdn.jsdelivr.net/gh/atomiclabs/cryptocurrency-icons@master/svg/color/generic.svg";
+                      }}
+                    />
+                    <div className="font-extrabold text-xl tracking-wide uppercase text-white group-hover:text-orange-400 transition-colors">
+                      {coin.symbol.replace('USDT', ' / USDT')}
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div className="text-xs font-bold bg-zinc-800 text-zinc-300 border border-zinc-700 px-2.5 py-1 rounded-lg">
@@ -181,7 +195,7 @@ export default function MarketPage() {
                 </div>
                 
                 <div className="mb-4">
-                  <div className="text-zinc-500 text-sm mb-1.5 font-medium">Текущая цена</div>
+                  <div className="text-zinc-500 text-sm mb-1.5 font-medium">Поточна ціна</div>
                   <div className="font-black text-3xl text-white tracking-tight">
                     ${coin.kline.close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                   </div>
@@ -190,7 +204,7 @@ export default function MarketPage() {
 
               <div className="flex justify-between text-sm mt-6 border-t border-zinc-800/80 pt-5 relative z-10">
                 <div>
-                  <span className="text-zinc-500">Мин: </span>
+                  <span className="text-zinc-500">Мін: </span>
                   <span className="text-red-400 font-bold">${coin.kline.low}</span>
                 </div>
                 <div>
@@ -203,7 +217,7 @@ export default function MarketPage() {
         </div>
       ) : (
         <div className="text-zinc-500 text-center py-16 font-medium bg-zinc-900/30 rounded-3xl border border-dashed border-zinc-800">
-          Ожидание данных от биржи...
+          Очікування даних від біржі...
         </div>
       )}
     </div>

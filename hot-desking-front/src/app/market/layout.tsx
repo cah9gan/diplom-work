@@ -26,7 +26,7 @@ export default function MarketLayout({ children }: { children: React.ReactNode }
   if (!isAuthorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-slate-400">Проверка доступа...</div>
+        <div className="animate-pulse text-slate-400">Перевірка доступу...</div>
       </div>
     );
   }

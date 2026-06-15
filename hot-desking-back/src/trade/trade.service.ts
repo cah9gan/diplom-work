@@ -197,48 +197,56 @@ export class TradeService {
   // 3. МЕТОДЫ ПРОСМОТРА (Чтение данных)
   // ---------------------------------------------------------
 
-  public async getUserPortfolio(userId: string) {
-    const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-    const openPositions = await this.prisma.tradePosition.findMany({
-      where: { userId, status: 'OPEN' },
+  public async getPortfolio(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        wallet: true,
+        positions: { where: { status: 'OPEN' } },
+      },
     });
+
+    const walletBalance = Number(user?.wallet?.balance || 0);
 
     let totalUnrealizedPnL = 0;
+    let totalPositionValue = 0; // 👈 1. Добавляем счетчик общей стоимости активов
 
-    const positionsWithPnL = openPositions.map((pos) => {
-      let currentPrice: number;
-      try {
-        currentPrice = this.priceService.getLatestPrice(pos.symbol);
-      } catch {
-        currentPrice = Number(pos.entryPrice);
-      }
+    const activePositions =
+      user?.positions.map((pos) => {
+        // Получаем актуальную цену из PriceService
+        const currentPrice = this.priceService.getPrice(pos.symbol);
 
-      const entry = Number(pos.entryPrice);
-      const amount = Number(pos.amount);
-      const profit = (currentPrice - entry) * amount;
-      const profitPercentage = ((currentPrice - entry) / entry) * 100;
+        // Сколько денег потратили при покупке
+        const entryValue = Number(pos.amount) * Number(pos.entryPrice);
+        // Сколько эти монеты стоят прямо сейчас
+        const currentValue = Number(pos.amount) * currentPrice;
 
-      totalUnrealizedPnL += profit;
+        const profit = currentValue - entryValue;
+        const profitPercentage =
+          entryValue > 0 ? (profit / entryValue) * 100 : 0;
 
-      return {
-        id: pos.id,
-        symbol: pos.symbol,
-        amount,
-        entryPrice: entry,
-        currentPrice,
-        profit,
-        profitPercentage,
-        createdAt: pos.createdAt,
-      };
-    });
+        totalUnrealizedPnL += profit;
+        totalPositionValue += currentValue; // 👈 2. Плюсуем текущую стоимость монеты в общую копилку
 
-    const balance = wallet ? Number(wallet.balance) : 0;
+        return {
+          id: pos.id,
+          symbol: pos.symbol,
+          amount: Number(pos.amount),
+          entryPrice: Number(pos.entryPrice),
+          currentPrice,
+          profit,
+          profitPercentage,
+        };
+      }) || [];
+
+    // 👇 3. ПРАВИЛЬНЫЙ РАСЧЕТ КАПИТАЛА: Свободный кэш + Стоимость всех активов
+    const totalEquity = walletBalance + totalPositionValue;
 
     return {
-      walletBalance: balance,
-      totalEquity: balance + totalUnrealizedPnL,
+      walletBalance,
+      totalEquity, // Теперь тут будет честная сумма (например, $10,029.65)
       totalUnrealizedPnL,
-      activePositions: positionsWithPnL,
+      activePositions,
     };
   }
 

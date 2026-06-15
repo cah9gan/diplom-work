@@ -24,7 +24,7 @@ export function SetPasswordForm() {
 
     // Базовая проверка, что пароли совпадают
     if (password !== confirmPassword) {
-      setError("Пароли не совпадают!");
+      setError("Паролі не співпадають!");
       return;
     }
 
@@ -41,7 +41,7 @@ export function SetPasswordForm() {
 
       setIsSuccess(true);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Неверный код или ссылка устарела";
+      const errorMessage = err.response?.data?.message || "Невірний код або посилання застаріло";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -52,7 +52,7 @@ export function SetPasswordForm() {
   if (!email || !code) {
     return (
       <div className="text-center text-red-600">
-        Неверная ссылка. Пожалуйста, перейдите по ссылке из письма.
+        Невірне посилання. Будь ласка, перейдіть за посиланням з листа.
       </div>
     );
   }
@@ -61,8 +61,8 @@ export function SetPasswordForm() {
   if (isSuccess) {
     return (
       <div className="text-center text-green-600">
-        <h2 className="text-xl font-bold mb-2">Успешно!</h2>
-        <p>Ваш пароль сохранен. Теперь вы можете войти в систему.</p>
+        <h2 className="text-xl font-bold mb-2">Успішно!</h2>
+        <p>Ваш пароль збережено. Тепер ви можете увійти в систему.</p>
         {/* Позже мы добавим сюда кнопку перехода на страницу логина */}
       </div>
     );
@@ -77,7 +77,7 @@ export function SetPasswordForm() {
       )}
 
       <div className="text-center text-sm text-gray-500 mb-4">
-        Установка пароля для: <br/> <b>{email}</b>
+        Встановлення пароля для: <br/> <b>{email}</b>
       </div>
 
       <input 
@@ -91,7 +91,7 @@ export function SetPasswordForm() {
       />
       <input 
         type="password" 
-        placeholder="Повторите пароль" 
+        placeholder="Повторіть пароль" 
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         className="border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" 
@@ -105,7 +105,7 @@ export function SetPasswordForm() {
           isLoading ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
         }`}
       >
-        {isLoading ? "Сохранение..." : "Сохранить и войти"}
+        {isLoading ? "Збереження..." : "Зберегти та увійти"}
       </button>
     </form>
   );

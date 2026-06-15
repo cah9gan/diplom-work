@@ -37,28 +37,28 @@ interface PortfolioAsset {
 
 const RANGE_OPTIONS: Record<string, { label: string; seconds: number | "ALL" }[]> = {
   "1m": [
-    { label: "15 Мин", seconds: 15 * 60 },
-    { label: "1 Час", seconds: 60 * 60 },
-    { label: "4 Часа", seconds: 4 * 60 * 60 },
-    { label: "Всё время", seconds: "ALL" }
+    { label: "15 Хв", seconds: 15 * 60 },
+    { label: "1 Год", seconds: 60 * 60 },
+    { label: "4 Год", seconds: 4 * 60 * 60 },
+    { label: "Увесь час", seconds: "ALL" }
   ],
   "15m": [
-    { label: "4 Часа", seconds: 4 * 60 * 60 },
-    { label: "12 Часов", seconds: 12 * 60 * 60 },
+    { label: "4 Год", seconds: 4 * 60 * 60 },
+    { label: "12 Год", seconds: 12 * 60 * 60 },
     { label: "1 День", seconds: 24 * 60 * 60 },
-    { label: "Всё время", seconds: "ALL" }
+    { label: "Увесь час", seconds: "ALL" }
   ],
   "1h": [
     { label: "1 День", seconds: 24 * 60 * 60 },
-    { label: "3 Дня", seconds: 3 * 24 * 60 * 60 },
-    { label: "1 Неделя", seconds: 7 * 24 * 60 * 60 },
-    { label: "Всё время", seconds: "ALL" }
+    { label: "3 Дні", seconds: 3 * 24 * 60 * 60 },
+    { label: "1 Тиждень", seconds: 7 * 24 * 60 * 60 },
+    { label: "Увесь час", seconds: "ALL" }
   ],
   "1d": [
-    { label: "1 Мес", seconds: 30 * 24 * 60 * 60 },
-    { label: "6 Мес", seconds: 6 * 30 * 24 * 60 * 60 },
-    { label: "1 Год", seconds: 365 * 24 * 60 * 60 },
-    { label: "Всё время", seconds: "ALL" }
+    { label: "1 Міс", seconds: 30 * 24 * 60 * 60 },
+    { label: "6 Міс", seconds: 6 * 30 * 24 * 60 * 60 },
+    { label: "1 Рік", seconds: 365 * 24 * 60 * 60 },
+    { label: "Увесь час", seconds: "ALL" }
   ]
 };
 
@@ -74,9 +74,9 @@ const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPred
   if (!prediction) return null;
   
   const config = {
-    up: { color: "text-green-400 bg-green-500/10 border-green-500/20", icon: "↑", label: "ПРОГНОЗ РОСТА" },
-    down: { color: "text-red-400 bg-red-500/10 border-red-500/20", icon: "↓", label: "ПРОГНОЗ ПАДЕНИЯ" },
-    neutral: { color: "text-zinc-400 bg-zinc-800/50 border-zinc-700", icon: "→", label: "ФЛЭТ / НЕЙТРАЛЬНО" }
+    up: { color: "text-green-400 bg-green-500/10 border-green-500/20", icon: "↑", label: "ПРОГНОЗ РОСТУ" },
+    down: { color: "text-red-400 bg-red-500/10 border-red-500/20", icon: "↓", label: "ПРОГНОЗ ПАДІННЯ" },
+    neutral: { color: "text-zinc-400 bg-zinc-800/50 border-zinc-700", icon: "→", label: "ФЛЕТ / НЕЙТРАЛЬНО" }
   };
 
   const currentConf = config[prediction.trend];
@@ -93,7 +93,7 @@ const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPred
         </div>
         {prediction.targetPrice && (
           <div className="text-[10px] font-semibold opacity-80 mt-1">
-            Цель: ${prediction.targetPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            Ціль: ${prediction.targetPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </div>
         )}
       </div>
@@ -215,7 +215,7 @@ export default function CoinPage() {
         lineWidth: 2,
         lineStyle: 2,
         axisLabelVisible: true,
-        title: `AI Цель (${aiInterval})`,
+        title: `AI Ціль (${aiInterval})`,
       });
     }
   }, [prediction, aiInterval]);
@@ -345,7 +345,7 @@ export default function CoinPage() {
 
   const handleTrade = async (type: 'BUY' | 'SELL') => {
     if (!parsedInput || parsedInput <= 0 || !currentPrice) {
-      setTradeMessage({ type: 'error', text: 'Введите корректную сумму' });
+      setTradeMessage({ type: 'error', text: 'Введіть коректну суму' });
       return;
     }
 
@@ -371,15 +371,15 @@ export default function CoinPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setTradeMessage({ type: 'success', text: `Ордер ${type} успешно выполнен!` });
+        setTradeMessage({ type: 'success', text: `Ордер ${type} успішно виконано!` });
         setInputValue("");
         fetchPortfolio();
       } else {
-        setTradeMessage({ type: 'error', text: data.message || 'Ошибка выполнения ордера' });
+        setTradeMessage({ type: 'error', text: data.message || 'Помилка виконання ордера' });
       }
     } catch (error) {
       console.error(error);
-      setTradeMessage({ type: 'error', text: 'Ошибка сети' });
+      setTradeMessage({ type: 'error', text: 'Помилка мережі' });
     } finally {
       setIsTrading(false);
       setTimeout(() => setTradeMessage(null), 3000);
@@ -389,7 +389,7 @@ export default function CoinPage() {
   return (
     <div className="max-w-350 mx-auto px-4 py-8">
       <Link href="/market" className="text-orange-400 hover:text-orange-300 font-bold transition-colors mb-6 inline-block">
-        &larr; Назад к спискам
+        &larr; Назад до списків
       </Link>
 
       <div className="flex flex-col xl:flex-row gap-6">
@@ -418,7 +418,7 @@ export default function CoinPage() {
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Прогноз:</span>
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
-                  {[{ label: '15м', value: '15m' }, { label: '1ч', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
+                  {[{ label: '15хв', value: '15m' }, { label: '1г', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
                     <button
                       key={interval.value}
                       onClick={() => setAiInterval(interval.value)}
@@ -435,9 +435,9 @@ export default function CoinPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Свечи:</span>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Свічки:</span>
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
-                  {[{ label: '1м', value: '1m' }, { label: '15м', value: '15m' }, { label: '1ч', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
+                  {[{ label: '1хв', value: '1m' }, { label: '15хв', value: '15m' }, { label: '1г', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
                     <button
                       key={interval.value}
                       onClick={() => setActiveInterval(interval.value)}
@@ -476,7 +476,7 @@ export default function CoinPage() {
         {/* ПРАВАЯ ЧАСТЬ: Торговая панель */}
         <div className="w-full xl:w-96 flex flex-col gap-6">
           <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-800 p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-white mb-6">Торговля</h2>
+            <h2 className="text-xl font-bold text-white mb-6">Торгівля</h2>
             
             {/* Балансы */}
             <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50 mb-6">
@@ -485,7 +485,7 @@ export default function CoinPage() {
                 <p className="text-lg font-bold text-white">${walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-wider">В активе {baseAsset}</p>
+                <p className="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-wider">В активі {baseAsset}</p>
                 <p className="text-lg font-bold text-white">{assetBalance}</p>
               </div>
             </div>
@@ -494,7 +494,7 @@ export default function CoinPage() {
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                  Режим ввода:
+                  Режим вводу:
                 </label>
                 <div className="flex bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
                   <button
@@ -527,7 +527,7 @@ export default function CoinPage() {
               
               {/* Оценка */}
               <div className="flex justify-between mt-3 px-1">
-                <span className="text-xs font-medium text-zinc-500">Оценка сделки:</span>
+                <span className="text-xs font-medium text-zinc-500">Оцінка угоди:</span>
                 <span className="text-xs font-bold text-white">
                   {inputCurrency === 'BASE' 
                     ? `≈ ${calculatedCostQuote.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`
@@ -553,14 +553,14 @@ export default function CoinPage() {
                 disabled={isTrading || !currentPrice}
                 className="flex-1 bg-green-500 hover:bg-green-400 text-green-950 font-black py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isTrading ? 'ОБРАБОТКА...' : 'КУПИТЬ'}
+                {isTrading ? 'ОБРОБКА...' : 'КУПИТИ'}
               </button>
               <button
                 onClick={() => handleTrade('SELL')}
                 disabled={isTrading || !currentPrice}
                 className="flex-1 bg-red-500 hover:bg-red-400 text-red-950 font-black py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isTrading ? 'ОБРАБОТКА...' : 'ПРОДАТЬ'}
+                {isTrading ? 'ОБРОБКА...' : 'ПРОДАТИ'}
               </button>
             </div>
           </div>

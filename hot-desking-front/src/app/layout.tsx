@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 // Это мета-теги, которые пойдут в <head> (название вкладки в браузере)
 export const metadata: Metadata = {
   title: "Market Predict",
-  description: "Аналитика и предсказание рыночных трендов",
+  description: "Аналітика та передбачення ринкових трендів",
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="uk">
       <body className={`${inter.className} bg-linear-to-br from-zinc-950 to-zinc-900 text-zinc-100 min-h-screen flex flex-col selection:bg-orange-500/30 selection:text-orange-200`}>
         {/* Шапка будет на всех страницах */}
         <Header />

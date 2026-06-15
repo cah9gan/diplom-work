@@ -9,10 +9,15 @@ export class PriceService {
     this.latestPrices.set(symbol.toUpperCase(), price);
   }
 
-  // Торговый сервис будет брать цену отсюда (мгновенно!)
+  // 1. Строгий метод для ТОРГОВЛИ (если цены нет — выдаем ошибку, торговать нельзя)
   getLatestPrice(symbol: string): number {
     const price = this.latestPrices.get(symbol.toUpperCase());
     if (!price) throw new BadRequestException('Price not available yet');
     return price;
+  }
+
+  // 2. Мягкий метод для ПОРТФЕЛЯ (если цены пока нет — отдаем 0, чтобы страница профиля не падала)
+  getPrice(symbol: string): number {
+    return this.latestPrices.get(symbol.toUpperCase()) || 0;
   }
 }

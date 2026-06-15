@@ -42,7 +42,7 @@ export class TradeController {
 
   @Get('portfolio')
   async getPortfolio(@User() user: JWTUser) {
-    return this.tradeService.getUserPortfolio(user.userId);
+    return this.tradeService.getPortfolio(user.userId);
   }
 
   @Get('history')
@@ -63,5 +63,12 @@ export class TradeController {
     @Body() dto: AdminDepositDTO,
   ) {
     return this.tradeService.adminDeposit(admin.userId, id, dto.amount);
+  }
+
+  @Roles(UserRole.Admin)
+  @Get('history/:id')
+  @HttpCode(HttpStatus.OK)
+  async getUserHistoryByAdmin(@Param() { id }: IdParamDTO) {
+    return this.tradeService.getTransactionHistory(id);
   }
 }

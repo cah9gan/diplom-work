@@ -1,5 +1,5 @@
 "use client";
-
+import { PortfolioChart } from "@/src/components/PortfolioChart";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/src/lib/api-client";
@@ -88,7 +88,7 @@ export default function ProfilePage() {
       setUser({ ...user, firstName: editFirstName, lastName: editLastName });
       setIsEditing(false);
     } catch {
-      alert("Не удалось сохранить профиль");
+      alert("Не вдалося зберегти профіль");
     } finally {
       setIsSaving(false);
     }
@@ -104,7 +104,7 @@ export default function ProfilePage() {
       await apiClient.patch("/profile/2fa", { status: newStatus });
       setUser({ ...user, twoFactorStatus: newStatus });
     } catch {
-      alert("Не удалось обновить настройки 2FA");
+      alert("Не вдалося оновити налаштування 2FA");
     } finally {
       setIsUpdating2FA(false);
     }
@@ -116,15 +116,15 @@ export default function ProfilePage() {
     setResetMessage("");
     try {
       await apiClient.post("/profile/reset", { email: user.email });
-      setResetMessage("Ссылка для смены пароля отправлена на почту!");
+      setResetMessage("Посилання для зміни пароля надіслано на пошту!");
     } catch {
-      setResetMessage("Произошла ошибка. Попробуйте позже.");
+      setResetMessage("Виникла помилка. Спробуйте пізніше.");
     } finally {
       setIsResetting(false);
     }
   };
 
-  if (isLoading) return <div className="text-center py-20 animate-pulse text-orange-500 font-bold uppercase tracking-widest">Загрузка...</div>;
+  if (isLoading) return <div className="text-center py-20 animate-pulse text-orange-500 font-bold uppercase tracking-widest">Завантаження...</div>;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -149,14 +149,14 @@ export default function ProfilePage() {
                     <input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="border border-zinc-700 bg-zinc-950 text-white px-3 py-2 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none w-40" />
                   </div>
                   <div className="flex gap-2 mt-1">
-                    <button onClick={handleSaveProfile} disabled={isSaving} className="bg-orange-500 hover:bg-orange-600 text-zinc-950 text-sm font-bold px-4 py-2 rounded-lg transition-colors">Сохранить</button>
-                    <button onClick={() => setIsEditing(false)} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">Отмена</button>
+                    <button onClick={handleSaveProfile} disabled={isSaving} className="bg-orange-500 hover:bg-orange-600 text-zinc-950 text-sm font-bold px-4 py-2 rounded-lg transition-colors">Зберегти</button>
+                    <button onClick={() => setIsEditing(false)} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors">Скасувати</button>
                   </div>
                 </div>
               ) : (
                 <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
                   {user?.firstName} {user?.lastName} 
-                  <button onClick={() => setIsEditing(true)} className="text-zinc-600 hover:text-orange-400 transition-colors" title="Редактировать">
+                  <button onClick={() => setIsEditing(true)} className="text-zinc-600 hover:text-orange-400 transition-colors" title="Редагувати">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" /></svg>
                   </button>
                 </h1>
@@ -169,44 +169,53 @@ export default function ProfilePage() {
           {/* 👇 НОВЫЙ БЛОК: ПОРТФЕЛЬ */}
           {portfolio && (
             <div className="border-t border-zinc-800/80 pt-8 mb-8">
-              <h2 className="text-xl font-bold text-white mb-5">Финансовая сводка</h2>
+              <h2 className="text-xl font-bold text-white mb-5">Фінансове зведення</h2>
               
               {/* Общие цифры */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="bg-zinc-950/50 rounded-2xl border border-zinc-800 p-5">
-                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Свободно (USDT)</p>
+                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Вільно (USDT)</p>
                   <p className="text-2xl font-black text-white">${portfolio.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 
                 <div className="bg-zinc-950/50 rounded-2xl border border-zinc-800 p-5">
-                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Капитал (С активами)</p>
+                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Капітал (З активами)</p>
                   <p className="text-2xl font-black text-white">${portfolio.totalEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 
                 <div className={`bg-zinc-950/50 rounded-2xl border p-5 ${portfolio.totalUnrealizedPnL >= 0 ? 'border-green-500/20' : 'border-red-500/20'}`}>
-                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Прибыль / Убыток</p>
+                  <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1">Прибуток / Збиток</p>
                   <p className={`text-2xl font-black ${portfolio.totalUnrealizedPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {portfolio.totalUnrealizedPnL > 0 ? '+' : ''}{portfolio.totalUnrealizedPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
                   </p>
                 </div>
               </div>
 
+              {/* 📊 ГРАФИК РАСПРЕДЕЛЕНИЯ АКТИВОВ */}
+              <div className="bg-zinc-950/50 rounded-2xl border border-zinc-800 p-6 mb-6">
+                <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider mb-4 text-center">Розподіл капіталу</h3>
+                <PortfolioChart 
+                  walletBalance={portfolio.walletBalance} 
+                  activePositions={portfolio.activePositions} 
+                />
+              </div>
+
               {/* Список активов */}
               <div className="bg-zinc-950/50 rounded-2xl border border-zinc-800 overflow-hidden">
                 <div className="px-5 py-4 border-b border-zinc-800 bg-zinc-900/50">
-                  <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">Открытые позиции</h3>
+                  <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">Відкриті позиції</h3>
                 </div>
                 
                 {portfolio.activePositions.length === 0 ? (
-                  <div className="p-8 text-center text-zinc-500">У вас пока нет купленных монет.</div>
+                  <div className="p-8 text-center text-zinc-500">У вас поки немає куплених монет.</div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                       <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/30">
                         <tr>
                           <th className="px-5 py-3 font-medium">Актив</th>
-                          <th className="px-5 py-3 font-medium text-right">Количество</th>
-                          <th className="px-5 py-3 font-medium text-right">Цена входа / Текущая</th>
+                          <th className="px-5 py-3 font-medium text-right">Кількість</th>
+                          <th className="px-5 py-3 font-medium text-right">Ціна входу / Поточна</th>
                           <th className="px-5 py-3 font-medium text-right">PnL</th>
                         </tr>
                       </thead>
@@ -247,12 +256,12 @@ export default function ProfilePage() {
 
           {/* Безопасность */}
           <div className="border-t border-zinc-800/80 pt-8 mt-4">
-            <h2 className="text-xl font-bold text-white mb-5">Безопасность</h2>
+            <h2 className="text-xl font-bold text-white mb-5">Безпека</h2>
             
             <div className="flex items-center justify-between p-5 bg-zinc-950/50 rounded-2xl border border-zinc-800 mb-5">
               <div>
-                <p className="font-semibold text-zinc-200">Двухфакторная аутентификация</p>
-                <p className="text-sm text-zinc-500 mt-0.5">{user?.twoFactorStatus === 'active' ? 'Дополнительная защита включена' : 'Повысьте безопасность аккаунта'}</p>
+                <p className="font-semibold text-zinc-200">Двофакторна автентифікація</p>
+                <p className="text-sm text-zinc-500 mt-0.5">{user?.twoFactorStatus === 'active' ? 'Додатковий захист увімкнено' : 'Підвищіть безпеку акаунта'}</p>
               </div>
               <button 
                 onClick={handleToggle2FA}
@@ -264,7 +273,7 @@ export default function ProfilePage() {
             </div>
 
             <button onClick={handleResetPassword} disabled={isResetting} className="text-orange-400 font-medium hover:text-orange-300 transition-colors">
-              {isResetting ? "Отправка..." : "Сбросить пароль"}
+              {isResetting ? "Відправка..." : "Скинути пароль"}
             </button>
             {resetMessage && <p className="mt-3 text-sm text-green-400 bg-green-500/10 p-3 rounded-xl border border-green-500/20">{resetMessage}</p>}
           </div>

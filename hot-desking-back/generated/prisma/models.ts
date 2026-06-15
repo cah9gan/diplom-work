@@ -8,6 +8,7 @@
  *
  * 🟢 You can import this file directly.
  */
+export type * from './models/Announcement.js'
 export type * from './models/Wallet.js'
 export type * from './models/TradePosition.js'
 export type * from './models/Transaction.js'

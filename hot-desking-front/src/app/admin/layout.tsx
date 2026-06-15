@@ -42,15 +42,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="animate-pulse text-orange-500 font-bold tracking-widest uppercase text-sm">
-          Проверка прав...
+          Перевірка прав...
         </div>
       </div>
     );
   }
 
   const navLinks = [
-    { href: "/admin/users", label: "Пользователи", icon: "👥" },
-    { href: "/admin/symbols", label: "Управление монетами", icon: "📈" },
+    { href: "/admin/users", label: "Користувачі", icon: "👥" },
+    { href: "/admin/symbols", label: "Управління монетами", icon: "📈" },
   ];
 
   return (

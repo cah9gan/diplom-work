@@ -73,7 +73,7 @@ export function Header() {
             href="/" 
             className={`text-sm font-bold tracking-wide transition-colors hover:text-white ${pathname === "/" ? "text-orange-400" : "text-zinc-400"}`}
           >
-            Главная
+            Головна
           </Link>
           
           {isLoggedIn && (
@@ -81,7 +81,7 @@ export function Header() {
               href="/market" 
               className={`text-sm font-bold tracking-wide transition-colors hover:text-white ${pathname === "/market" ? "text-orange-400" : "text-zinc-400"}`}
             >
-              Рынки
+              Ринки
             </Link>
           )}
 
@@ -90,7 +90,7 @@ export function Header() {
               href="/admin/users" 
               className="bg-orange-500/10 border border-orange-500/30 text-orange-400 px-4 py-2 rounded-xl text-sm font-bold hover:bg-orange-500/20 hover:text-orange-300 transition-all"
             >
-              🔑 Админ-панель
+              🔑 Адмін-панель
             </Link>
           )}
           
@@ -99,7 +99,7 @@ export function Header() {
               <Link 
                 href="/profile" 
                 className={`w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center transition-all border group ${pathname === "/profile" ? "border-orange-500" : "border-zinc-700 hover:border-orange-500/50"}`}
-                title="Мой профиль"
+                title="Мій профіль"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-5 h-5 transition-colors ${pathname === "/profile" ? "text-orange-400" : "text-zinc-400 group-hover:text-orange-400"}`}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -110,16 +110,16 @@ export function Header() {
                 onClick={handleLogout}
                 className="bg-zinc-900 border border-zinc-700 hover:border-red-500/50 text-zinc-300 hover:text-red-400 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm"
               >
-                Выйти
+                Вийти
               </button>
             </div>
           ) : (
             <div className="flex items-center gap-4 ml-2">
               <Link href="/login" className="text-sm font-bold text-zinc-300 hover:text-white transition-colors">
-                Войти
+                Увійти
               </Link>
               <Link href="/register" className="bg-linear-to-r from-orange-500 to-yellow-500 hover:from-orange-400 hover:to-yellow-400 text-zinc-950 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-orange-500/20">
-                Регистрация
+                Реєстрація
               </Link>
             </div>
           )}

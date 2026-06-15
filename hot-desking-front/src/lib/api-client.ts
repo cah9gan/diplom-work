@@ -7,14 +7,14 @@ export const apiClient = axios.create({
   },
 });
 
-// Добавляем перехватчик: он срабатывает ПЕРЕД каждым запросом
+// Додаємо перехоплювач: він спрацьовує ПЕРЕД кожним запитом
 apiClient.interceptors.request.use((config) => {
-  // Проверяем, что мы в браузере, и достаем токен
+  // Перевіряємо, чи ми в браузері, і дістаємо токен
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   if (token) {
-    // Если токен есть, цепляем его в заголовки
+    // Якщо токен є, чіпляємо його в заголовки
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
