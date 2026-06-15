@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -27,6 +27,12 @@ interface MarketStreamMessage {
   interval: string;
   kline: StreamKline;
   prediction?: MarketPrediction;
+}
+
+interface PortfolioAsset {
+  symbol: string;
+  amount: number;
+  [key: string]: unknown;
 }
 
 const RANGE_OPTIONS: Record<string, { label: string; seconds: number | "ALL" }[]> = {
@@ -98,6 +104,9 @@ const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPred
 export default function CoinPage() {
   const params = useParams();
   const symbol = params.symbol as string;
+  
+  const baseAsset = symbol.toUpperCase().replace("USDT", "");
+  const quoteAsset = "USDT";
 
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [prediction, setPrediction] = useState<MarketPrediction | null>(null);
@@ -107,6 +116,15 @@ export default function CoinPage() {
   const [aiInterval, setAiInterval] = useState<string>("1d");
   const [activeRange, setActiveRange] = useState<string>("ALL");
   
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [assetBalance, setAssetBalance] = useState<number>(0);
+  const [isTrading, setIsTrading] = useState<boolean>(false);
+  const [tradeMessage, setTradeMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  // 👇 НОВЫЕ СОСТОЯНИЯ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ ВВОДА 👇
+  const [inputValue, setInputValue] = useState<string>("");
+  const [inputCurrency, setInputCurrency] = useState<'BASE' | 'QUOTE'>('BASE');
+
   const aiIntervalRef = useRef(aiInterval);
   useEffect(() => {
     aiIntervalRef.current = aiInterval;
@@ -117,7 +135,36 @@ export default function CoinPage() {
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const aiLineRef = useRef<IPriceLine | null>(null);
 
-  // ЭФФЕКТ 1: Инициализация холста
+  const fetchPortfolio = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`http://localhost:3000/trade/portfolio`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWalletBalance(data.walletBalance);
+        
+        const asset = data.activePositions.find((p: PortfolioAsset) => 
+          p.symbol.toLowerCase() === symbol.toLowerCase()
+        );
+        setAssetBalance(asset ? asset.amount : 0);
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки портфеля:", error);
+    }
+  }, [symbol]);
+
+  useEffect(() => {
+    const initPortfolio = async () => {
+      await fetchPortfolio();
+    };
+
+    initPortfolio();
+  }, [fetchPortfolio]);
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -153,7 +200,6 @@ export default function CoinPage() {
     };
   }, []);
 
-  // ЭФФЕКТ 2: Отрисовка линии прогноза на графике
   useEffect(() => {
     if (!seriesRef.current) return;
 
@@ -174,7 +220,6 @@ export default function CoinPage() {
     }
   }, [prediction, aiInterval]);
 
-  // ЭФФЕКТ 3: Загрузка ИИ-прогноза
   useEffect(() => {
     const fetchPrediction = async () => {
       try {
@@ -200,7 +245,6 @@ export default function CoinPage() {
     fetchPrediction();
   }, [symbol, aiInterval]);
 
-  // 👇 ЭФФЕКТ 4: ИСПРАВЛЕННАЯ Загрузка Графика и WebSocket
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current) return;
 
@@ -217,22 +261,12 @@ export default function CoinPage() {
         if (historyRes.ok) {
           const data = await historyRes.json();
           
-          // МАГИЯ: Умное исправление времени (отрезаем миллисекунды только если они есть)
           let formattedData = data.map((item: StreamKline) => {
-            const correctTime = item.time > 10000000000 
-              ? Math.floor(item.time / 1000) 
-              : Math.floor(item.time);
-
-            return {
-              ...item,
-              time: correctTime as Time
-            };
+            const correctTime = item.time > 10000000000 ? Math.floor(item.time / 1000) : Math.floor(item.time);
+            return { ...item, time: correctTime as Time };
           });
 
-          // Сортируем от старых свечей к новым (чтобы график не ломался)
           formattedData.sort((a: StreamKline, b: StreamKline) => (a.time as number) - (b.time as number));
-
-          // Удаляем дубликаты времени (если биржа случайно отдала две одинаковые свечи)
           formattedData = formattedData.filter((item: StreamKline, index: number, array: StreamKline[]) => 
             index === 0 || item.time !== array[index - 1].time
           );
@@ -263,11 +297,7 @@ export default function CoinPage() {
         }
         
         if (seriesRef.current) {
-          // Умное исправление времени для WebSocket
-          const correctSocketTime = data.kline.time > 10000000000 
-            ? Math.floor(data.kline.time / 1000) 
-            : Math.floor(data.kline.time);
-
+          const correctSocketTime = data.kline.time > 10000000000 ? Math.floor(data.kline.time / 1000) : Math.floor(data.kline.time);
           seriesRef.current.update({
             time: correctSocketTime as Time, 
             open: data.kline.open,
@@ -284,118 +314,258 @@ export default function CoinPage() {
     };
   }, [symbol, activeInterval]);
 
-  const setTimeRange = (seconds: number | "ALL") => {
+  const setTimeRange = useCallback((seconds: number | "ALL") => {
     setActiveRange(String(seconds));
     if (!chartRef.current) return;
 
     if (seconds === "ALL") {
       chartRef.current.timeScale().fitContent();
     } else {
-      // eslint-disable-next-line react-hooks/purity
-      const to = Math.floor(Date.now() / 1000);
+      const now = new Date();
+      const to = Math.floor(now.getTime() / 1000);
       const from = to - seconds; 
       chartRef.current.timeScale().setVisibleRange({ from: from as Time, to: to as Time });
+    }
+  }, []);
+
+  // 👇 ЛОГИКА РАСЧЕТОВ 👇
+  const parsedInput = Number(inputValue) || 0;
+  let calculatedAmountBase = 0;
+  let calculatedCostQuote = 0;
+
+  if (currentPrice) {
+    if (inputCurrency === 'BASE') {
+      calculatedAmountBase = parsedInput; // Пользователь ввел кол-во BTC
+      calculatedCostQuote = parsedInput * currentPrice; // Считаем стоимость в USDT
+    } else {
+      calculatedCostQuote = parsedInput; // Пользователь ввел сумму в USDT
+      calculatedAmountBase = parsedInput / currentPrice; // Считаем кол-во BTC
+    }
+  }
+
+  const handleTrade = async (type: 'BUY' | 'SELL') => {
+    if (!parsedInput || parsedInput <= 0 || !currentPrice) {
+      setTradeMessage({ type: 'error', text: 'Введите корректную сумму' });
+      return;
+    }
+
+    try {
+      setIsTrading(true);
+      setTradeMessage(null);
+      const token = localStorage.getItem("token");
+
+      // Бэкенд всегда ждет количество в базовом активе (BTC)
+      const res = await fetch(`http://localhost:3000/trade/order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          symbol: symbol.toUpperCase(),
+          amount: calculatedAmountBase, 
+          type
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setTradeMessage({ type: 'success', text: `Ордер ${type} успешно выполнен!` });
+        setInputValue("");
+        fetchPortfolio();
+      } else {
+        setTradeMessage({ type: 'error', text: data.message || 'Ошибка выполнения ордера' });
+      }
+    } catch (error) {
+      console.error(error);
+      setTradeMessage({ type: 'error', text: 'Ошибка сети' });
+    } finally {
+      setIsTrading(false);
+      setTimeout(() => setTradeMessage(null), 3000);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-350 mx-auto px-4 py-8">
       <Link href="/market" className="text-orange-400 hover:text-orange-300 font-bold transition-colors mb-6 inline-block">
-        &larr; Назад к списку
+        &larr; Назад к спискам
       </Link>
 
-      <div className="bg-zinc-900/80 backdrop-blur-xl rounded-4xl shadow-2xl shadow-black/50 border border-zinc-800 p-6 sm:p-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 border-b border-zinc-800/80 pb-6 gap-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-extrabold uppercase tracking-wide text-white">
-              {symbol.replace("usdt", " / USDT")}
-            </h1>
-            <div className="flex items-center gap-6">
-              {currentPrice ? (
-                <div className="text-4xl font-black text-white tracking-tight">
-                  ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+      <div className="flex flex-col xl:flex-row gap-6">
+        
+        {/* ЛЕВАЯ ЧАСТЬ: График и статистика */}
+        <div className="flex-1 bg-zinc-900/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/50 border border-zinc-800 p-6 sm:p-8">
+          <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center mb-8 border-b border-zinc-800/80 pb-6 gap-6">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl font-extrabold uppercase tracking-wide text-white">
+                {symbol.replace(/usdt/i, " / USDT")}
+              </h1>
+              <div className="flex items-center gap-6">
+                {currentPrice ? (
+                  <div className="text-4xl font-black text-white tracking-tight">
+                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                  </div>
+                ) : (
+                  <div className="animate-pulse bg-zinc-800 h-10 w-32 rounded"></div>
+                )}
+                <AiPredictionDisplay prediction={prediction} isLoading={isAiLoading} />
+              </div>
+            </div>
+
+            {/* Настройки графика и ИИ */}
+            <div className="flex flex-wrap gap-4 justify-start 2xl:justify-end">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Прогноз:</span>
+                <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
+                  {[{ label: '15м', value: '15m' }, { label: '1ч', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
+                    <button
+                      key={interval.value}
+                      onClick={() => setAiInterval(interval.value)}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
+                        aiInterval === interval.value
+                          ? 'bg-orange-500 text-zinc-950 shadow-md shadow-orange-500/20'
+                          : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-800'
+                      }`}
+                    >
+                      {interval.label}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <div className="animate-pulse bg-zinc-800 h-10 w-32 rounded"></div>
-              )}
-              
-              <AiPredictionDisplay prediction={prediction} isLoading={isAiLoading} />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Свечи:</span>
+                <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
+                  {[{ label: '1м', value: '1m' }, { label: '15м', value: '15m' }, { label: '1ч', value: '1h' }, { label: '1д', value: '1d' }].map((interval) => (
+                    <button
+                      key={interval.value}
+                      onClick={() => setActiveInterval(interval.value)}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                        activeInterval === interval.value ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
+                      }`}
+                    >
+                      {interval.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Масштаб:</span>
+                <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
+                  {(RANGE_OPTIONS[activeInterval] || RANGE_OPTIONS["1d"]).map((range) => (
+                    <button
+                      key={range.label}
+                      onClick={() => setTimeRange(range.seconds)}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                        activeRange === String(range.seconds) ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-orange-400 uppercase tracking-wider w-24">Прогноз ИИ:</span>
-              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
-                {[
-                  { label: '15 Мин', value: '15m' },
-                  { label: '1 Час', value: '1h' },
-                  { label: '1 День', value: '1d' }
-                ].map((interval) => (
-                  <button
-                    key={interval.value}
-                    onClick={() => setAiInterval(interval.value)}
-                    className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${
-                      aiInterval === interval.value
-                        ? 'bg-orange-500 text-zinc-950 shadow-md shadow-orange-500/20'
-                        : 'text-zinc-400 hover:text-orange-400 hover:bg-zinc-800'
-                    }`}
-                  >
-                    {interval.label}
-                  </button>
-                ))}
+          <div ref={chartContainerRef} className="w-full h-125 rounded-xl overflow-hidden border border-zinc-800/50" />
+        </div>
+
+        {/* ПРАВАЯ ЧАСТЬ: Торговая панель */}
+        <div className="w-full xl:w-96 flex flex-col gap-6">
+          <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-800 p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-white mb-6">Торговля</h2>
+            
+            {/* Балансы */}
+            <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50 mb-6">
+              <div>
+                <p className="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-wider">Доступно USDT</p>
+                <p className="text-lg font-bold text-white">${walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-wider">В активе {baseAsset}</p>
+                <p className="text-lg font-bold text-white">{assetBalance}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-24">График:</span>
-              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
-                {[
-                  { label: '1 Мин', value: '1m' },
-                  { label: '15 Мин', value: '15m' },
-                  { label: '1 Час', value: '1h' },
-                  { label: '1 День', value: '1d' }
-                ].map((interval) => (
+            {/* 👇 ОБНОВЛЕННЫЙ ВВОД 👇 */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  Режим ввода:
+                </label>
+                <div className="flex bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
                   <button
-                    key={interval.value}
-                    onClick={() => setActiveInterval(interval.value)}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                      activeInterval === interval.value
-                        ? 'bg-zinc-800 text-white shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
-                    }`}
+                    onClick={() => setInputCurrency('BASE')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${inputCurrency === 'BASE' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
-                    {interval.label}
+                    {baseAsset}
                   </button>
-                ))}
+                  <button
+                    onClick={() => setInputCurrency('QUOTE')}
+                    className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${inputCurrency === 'QUOTE' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    {quoteAsset}
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="number"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-3 text-white text-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-zinc-600"
+                />
+                <span className="absolute right-4 top-3.5 text-zinc-500 font-bold">
+                  {inputCurrency === 'BASE' ? baseAsset : quoteAsset}
+                </span>
+              </div>
+              
+              {/* Оценка */}
+              <div className="flex justify-between mt-3 px-1">
+                <span className="text-xs font-medium text-zinc-500">Оценка сделки:</span>
+                <span className="text-xs font-bold text-white">
+                  {inputCurrency === 'BASE' 
+                    ? `≈ ${calculatedCostQuote.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`
+                    : `≈ ${calculatedAmountBase.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${baseAsset}`
+                  }
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider w-24">Масштаб:</span>
-              <div className="flex bg-zinc-950/50 p-1 rounded-xl border border-zinc-800">
-                {(RANGE_OPTIONS[activeInterval] || RANGE_OPTIONS["1d"]).map((range) => (
-                  <button
-                    key={range.label}
-                    onClick={() => setTimeRange(range.seconds)}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                      activeRange === String(range.seconds)
-                        ? 'bg-zinc-800 text-white shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
-                    }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
+            {/* Оповещения */}
+            {tradeMessage && (
+              <div className={`p-3 rounded-xl mb-6 text-sm font-bold ${
+                tradeMessage.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+              }`}>
+                {tradeMessage.text}
               </div>
+            )}
+
+            {/* Кнопки */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => handleTrade('BUY')}
+                disabled={isTrading || !currentPrice}
+                className="flex-1 bg-green-500 hover:bg-green-400 text-green-950 font-black py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isTrading ? 'ОБРАБОТКА...' : 'КУПИТЬ'}
+              </button>
+              <button
+                onClick={() => handleTrade('SELL')}
+                disabled={isTrading || !currentPrice}
+                className="flex-1 bg-red-500 hover:bg-red-400 text-red-950 font-black py-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isTrading ? 'ОБРАБОТКА...' : 'ПРОДАТЬ'}
+              </button>
             </div>
           </div>
         </div>
 
-        <div 
-          ref={chartContainerRef} 
-          className="w-full h-125 rounded-2xl overflow-hidden border border-zinc-800/50"
-        />
       </div>
     </div>
   );

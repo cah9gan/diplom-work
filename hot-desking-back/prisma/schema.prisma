@@ -30,6 +30,50 @@ enum TwoFactorStatus {
   @@map("two_factor_status")
 }
 
+model Wallet {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance   Decimal  @default(0) @db.Decimal(18, 8)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("wallet")
+}
+
+model TradePosition {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol     String   @db.VarChar()
+  amount     Decimal  @db.Decimal(18, 8)
+  entryPrice Decimal  @map("entry_price") @db.Decimal(18, 8)
+  tp         Decimal? @db.Decimal(18, 8)
+  sl         Decimal? @db.Decimal(18, 8)
+  status     String   @default("OPEN") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("trade_position")
+}
+
+model Transaction {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Кому принадлежит транзакция (пользователь)
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Кто инициировал транзакцию (админ) - поле опциональное (?), т.к. обычные трейды идут без админа
+  adminId String? @map("admin_id") @db.Uuid
+  admin   User?   @relation("AdminDeposits", fields: [adminId], references: [id], onDelete: SetNull)
+
+  type      String   @db.VarChar(20) // e.g., "BUY", "SELL", "DEPOSIT"
+  amount    Decimal  @db.Decimal(18, 8)
+  price     Decimal  @db.Decimal(18, 8)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("transaction")
+}
+
 model LoginEmail {
   userId    String   @id @map("user_id") @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -77,6 +121,12 @@ model User {
 
   passwordResets PasswordReset?
   loginEmail     LoginEmail?
+  wallet         Wallet?
+  positions      TradePosition[]
+
+  // Обновленные связи для транзакций
+  transactions      Transaction[] @relation("UserTransactions") // Транзакции пользователя
+  processedDeposits Transaction[] @relation("AdminDeposits") // Транзакции, где этот юзер выступил админом
 
   @@map("user")
 }

@@ -4,32 +4,50 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+// Утилита для расшифровки JWT токена
+const parseJwt = (token: string) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch { 
+    return null;
+  }
+};
+
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // 👇 Добавляем стейт для проверки роли админа
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userString = localStorage.getItem("user");
-    
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoggedIn(!!token);
-
-    if (token && userString) {
-      try {
-        const user = JSON.parse(userString);
-        // Проверяем, совпадает ли роль с Admin (строка должна соответствовать твоему UserRole.Admin на бэке)
-        setIsAdmin(user.role === "Admin" || user.role === "admin");
-      } catch (e) {
-        console.error("Ошибка парсинга данных пользователя", e);
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      
+      if (token) {
+        const decodedUser = parseJwt(token);
+        
+        // JWT хранит время истечения (exp) в секундах, а Date.now() отдает в миллисекундах.
+        // Проверяем, не истек ли срок годности токена.
+        const isExpired = decodedUser?.exp ? (decodedUser.exp * 1000 < Date.now()) : false;
+        
+        // Если юзер расшифровался и токен НЕ протух — авторизуем
+        if (decodedUser && !isExpired) {
+          setIsLoggedIn(true);
+          setIsAdmin(decodedUser.role?.toLowerCase() === "admin");
+        } else {
+          // Если токен сломан или его время вышло — подчищаем за собой
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setIsLoggedIn(false);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsLoggedIn(false);
         setIsAdmin(false);
       }
-    } else {
-      setIsAdmin(false);
-    }
+    };
+
+    checkAuth();
   }, [pathname]);
 
   const handleLogout = () => {
@@ -44,7 +62,6 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 shadow-sm shadow-black/20">
       <div className="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
         
-        {/* Логотип */}
         <Link href="/" className="text-2xl font-black tracking-tighter group">
           <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-yellow-400 drop-shadow-sm group-hover:from-orange-400 group-hover:to-yellow-300 transition-all">
             MarketPredict
@@ -68,7 +85,6 @@ export function Header() {
             </Link>
           )}
 
-          {/* Кнопка: Показывается ТОЛЬКО если пользователь авторизован И он админ */}
           {isLoggedIn && isAdmin && (
             <Link 
               href="/admin/users" 

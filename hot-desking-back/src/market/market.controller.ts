@@ -22,7 +22,7 @@ import { UserRole } from '../users/dto';
 export class MarketController {
   constructor(
     private readonly marketService: MarketService,
-    private readonly symbolsService: SymbolsService, // 👈 Инжектим сервис для подсказок
+    private readonly symbolsService: SymbolsService,
   ) {}
 
   @Get('symbols')
@@ -52,13 +52,34 @@ export class MarketController {
     @Param('symbol') symbol: string,
     @Query('interval') interval?: string,
   ) {
-    // interval по умолчанию '1d', если фронт не передал другой
     return this.marketService.getInstantPrediction(symbol, interval || '1d');
   }
 
-  // 👇 НОВЫЕ МЕТОДЫ ДЛЯ АДМИН-ПАНЕЛИ 👇
+  // 👇 НОВЫЙ ЭНДПОИНТ ДЛЯ БЫСТРОЙ ЗАГРУЗКИ СТАТИСТИКИ 👇
 
-  @Roles(UserRole.Admin) // Убедись, что тут правильный регистр роли из твоего Enum (admin или Admin)
+  @Get('stats/24h')
+  @ApiOperation({
+    summary: 'Получить сводку за 24ч для пар (быстрая загрузка дашборда)',
+  })
+  async get24hStats(@Query('symbols') symbolsQuery?: string) {
+    let symbolsList: string[] = [];
+
+    if (symbolsQuery) {
+      // Если фронтенд попросил конкретные пары: ?symbols=BTCUSDT,ETHUSDT
+      symbolsList = symbolsQuery.split(',').map((s) => s.trim().toUpperCase());
+    } else {
+      // Если фронт не указал пары, бэкенд сам берет все активные монеты из БД
+      symbolsList = await this.marketService.getSupportedSymbols();
+    }
+
+    return this.marketService.getBulk24hStats(symbolsList);
+  }
+
+  // ---------------------------------------------------------
+  // АДМИН ПАНЕЛЬ
+  // ---------------------------------------------------------
+
+  @Roles(UserRole.Admin)
   @Post('symbols')
   @ApiOperation({ summary: 'Добавить новую криптовалюту для отслеживания' })
   async addSymbol(@Body() data: AddSymbolDTO) {

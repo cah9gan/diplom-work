@@ -224,6 +224,10 @@ export type UserWhereInput = {
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFilter<"User"> | $Enums.TwoFactorStatus
   passwordResets?: Prisma.XOR<Prisma.PasswordResetNullableScalarRelationFilter, Prisma.PasswordResetWhereInput> | null
   loginEmail?: Prisma.XOR<Prisma.LoginEmailNullableScalarRelationFilter, Prisma.LoginEmailWhereInput> | null
+  wallet?: Prisma.XOR<Prisma.WalletNullableScalarRelationFilter, Prisma.WalletWhereInput> | null
+  positions?: Prisma.TradePositionListRelationFilter
+  transactions?: Prisma.TransactionListRelationFilter
+  processedDeposits?: Prisma.TransactionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -239,6 +243,10 @@ export type UserOrderByWithRelationInput = {
   twoFactorStatus?: Prisma.SortOrder
   passwordResets?: Prisma.PasswordResetOrderByWithRelationInput
   loginEmail?: Prisma.LoginEmailOrderByWithRelationInput
+  wallet?: Prisma.WalletOrderByWithRelationInput
+  positions?: Prisma.TradePositionOrderByRelationAggregateInput
+  transactions?: Prisma.TransactionOrderByRelationAggregateInput
+  processedDeposits?: Prisma.TransactionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -257,6 +265,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFilter<"User"> | $Enums.TwoFactorStatus
   passwordResets?: Prisma.XOR<Prisma.PasswordResetNullableScalarRelationFilter, Prisma.PasswordResetWhereInput> | null
   loginEmail?: Prisma.XOR<Prisma.LoginEmailNullableScalarRelationFilter, Prisma.LoginEmailWhereInput> | null
+  wallet?: Prisma.XOR<Prisma.WalletNullableScalarRelationFilter, Prisma.WalletWhereInput> | null
+  positions?: Prisma.TradePositionListRelationFilter
+  transactions?: Prisma.TransactionListRelationFilter
+  processedDeposits?: Prisma.TransactionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -304,6 +316,10 @@ export type UserCreateInput = {
   twoFactorStatus?: $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
   loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -319,6 +335,10 @@ export type UserUncheckedCreateInput = {
   twoFactorStatus?: $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
   loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserUpdateInput = {
@@ -334,6 +354,10 @@ export type UserUpdateInput = {
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
   loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -349,6 +373,10 @@ export type UserUncheckedUpdateInput = {
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
   loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -395,6 +423,11 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
+}
+
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -432,6 +465,64 @@ export type UserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   twoFactorStatus?: Prisma.SortOrder
+}
+
+export type UserCreateNestedOneWithoutWalletInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWalletInput, Prisma.UserUncheckedCreateWithoutWalletInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWalletInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutWalletNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutWalletInput, Prisma.UserUncheckedCreateWithoutWalletInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutWalletInput
+  upsert?: Prisma.UserUpsertWithoutWalletInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutWalletInput, Prisma.UserUpdateWithoutWalletInput>, Prisma.UserUncheckedUpdateWithoutWalletInput>
+}
+
+export type UserCreateNestedOneWithoutPositionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPositionsInput, Prisma.UserUncheckedCreateWithoutPositionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPositionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPositionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPositionsInput, Prisma.UserUncheckedCreateWithoutPositionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPositionsInput
+  upsert?: Prisma.UserUpsertWithoutPositionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPositionsInput, Prisma.UserUpdateWithoutPositionsInput>, Prisma.UserUncheckedUpdateWithoutPositionsInput>
+}
+
+export type UserCreateNestedOneWithoutTransactionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTransactionsInput, Prisma.UserUncheckedCreateWithoutTransactionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTransactionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutProcessedDepositsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProcessedDepositsInput, Prisma.UserUncheckedCreateWithoutProcessedDepositsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProcessedDepositsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTransactionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTransactionsInput, Prisma.UserUncheckedCreateWithoutTransactionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTransactionsInput
+  upsert?: Prisma.UserUpsertWithoutTransactionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTransactionsInput, Prisma.UserUpdateWithoutTransactionsInput>, Prisma.UserUncheckedUpdateWithoutTransactionsInput>
+}
+
+export type UserUpdateOneWithoutProcessedDepositsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProcessedDepositsInput, Prisma.UserUncheckedCreateWithoutProcessedDepositsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProcessedDepositsInput
+  upsert?: Prisma.UserUpsertWithoutProcessedDepositsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProcessedDepositsInput, Prisma.UserUpdateWithoutProcessedDepositsInput>, Prisma.UserUncheckedUpdateWithoutProcessedDepositsInput>
 }
 
 export type UserCreateNestedOneWithoutLoginEmailInput = {
@@ -474,6 +565,358 @@ export type EnumTwoFactorStatusFieldUpdateOperationsInput = {
   set?: $Enums.TwoFactorStatus
 }
 
+export type UserCreateWithoutWalletInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
+}
+
+export type UserUncheckedCreateWithoutWalletInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type UserCreateOrConnectWithoutWalletInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutWalletInput, Prisma.UserUncheckedCreateWithoutWalletInput>
+}
+
+export type UserUpsertWithoutWalletInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutWalletInput, Prisma.UserUncheckedUpdateWithoutWalletInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutWalletInput, Prisma.UserUncheckedCreateWithoutWalletInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutWalletInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutWalletInput, Prisma.UserUncheckedUpdateWithoutWalletInput>
+}
+
+export type UserUpdateWithoutWalletInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUncheckedUpdateWithoutWalletInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type UserCreateWithoutPositionsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
+}
+
+export type UserUncheckedCreateWithoutPositionsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type UserCreateOrConnectWithoutPositionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPositionsInput, Prisma.UserUncheckedCreateWithoutPositionsInput>
+}
+
+export type UserUpsertWithoutPositionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPositionsInput, Prisma.UserUncheckedUpdateWithoutPositionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPositionsInput, Prisma.UserUncheckedCreateWithoutPositionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPositionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPositionsInput, Prisma.UserUncheckedUpdateWithoutPositionsInput>
+}
+
+export type UserUpdateWithoutPositionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPositionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type UserCreateWithoutTransactionsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
+}
+
+export type UserUncheckedCreateWithoutTransactionsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
+}
+
+export type UserCreateOrConnectWithoutTransactionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTransactionsInput, Prisma.UserUncheckedCreateWithoutTransactionsInput>
+}
+
+export type UserCreateWithoutProcessedDepositsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutProcessedDepositsInput = {
+  id: string
+  role: $Enums.UserRole
+  firstName: string
+  lastName: string
+  email: string
+  hash?: string | null
+  status: $Enums.UserStatus
+  createdAt?: Date | string
+  createdBy: string
+  twoFactorStatus?: $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutProcessedDepositsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutProcessedDepositsInput, Prisma.UserUncheckedCreateWithoutProcessedDepositsInput>
+}
+
+export type UserUpsertWithoutTransactionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTransactionsInput, Prisma.UserUncheckedUpdateWithoutTransactionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTransactionsInput, Prisma.UserUncheckedCreateWithoutTransactionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTransactionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTransactionsInput, Prisma.UserUncheckedUpdateWithoutTransactionsInput>
+}
+
+export type UserUpdateWithoutTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTransactionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
+}
+
+export type UserUpsertWithoutProcessedDepositsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutProcessedDepositsInput, Prisma.UserUncheckedUpdateWithoutProcessedDepositsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProcessedDepositsInput, Prisma.UserUncheckedCreateWithoutProcessedDepositsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutProcessedDepositsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutProcessedDepositsInput, Prisma.UserUncheckedUpdateWithoutProcessedDepositsInput>
+}
+
+export type UserUpdateWithoutProcessedDepositsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutProcessedDepositsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  hash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdBy?: Prisma.StringFieldUpdateOperationsInput | string
+  twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
+  passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutLoginEmailInput = {
   id: string
   role: $Enums.UserRole
@@ -486,6 +929,10 @@ export type UserCreateWithoutLoginEmailInput = {
   createdBy: string
   twoFactorStatus?: $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutLoginEmailInput = {
@@ -500,6 +947,10 @@ export type UserUncheckedCreateWithoutLoginEmailInput = {
   createdBy: string
   twoFactorStatus?: $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutLoginEmailInput = {
@@ -530,6 +981,10 @@ export type UserUpdateWithoutLoginEmailInput = {
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLoginEmailInput = {
@@ -544,6 +999,10 @@ export type UserUncheckedUpdateWithoutLoginEmailInput = {
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   passwordResets?: Prisma.PasswordResetUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
 export type UserCreateWithoutPasswordResetsInput = {
@@ -558,6 +1017,10 @@ export type UserCreateWithoutPasswordResetsInput = {
   createdBy: string
   twoFactorStatus?: $Enums.TwoFactorStatus
   loginEmail?: Prisma.LoginEmailCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionCreateNestedManyWithoutAdminInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetsInput = {
@@ -572,6 +1035,10 @@ export type UserUncheckedCreateWithoutPasswordResetsInput = {
   createdBy: string
   twoFactorStatus?: $Enums.TwoFactorStatus
   loginEmail?: Prisma.LoginEmailUncheckedCreateNestedOneWithoutUserInput
+  wallet?: Prisma.WalletUncheckedCreateNestedOneWithoutUserInput
+  positions?: Prisma.TradePositionUncheckedCreateNestedManyWithoutUserInput
+  transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput
+  processedDeposits?: Prisma.TransactionUncheckedCreateNestedManyWithoutAdminInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetsInput = {
@@ -602,6 +1069,10 @@ export type UserUpdateWithoutPasswordResetsInput = {
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   loginEmail?: Prisma.LoginEmailUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUpdateManyWithoutAdminNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetsInput = {
@@ -616,8 +1087,59 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   createdBy?: Prisma.StringFieldUpdateOperationsInput | string
   twoFactorStatus?: Prisma.EnumTwoFactorStatusFieldUpdateOperationsInput | $Enums.TwoFactorStatus
   loginEmail?: Prisma.LoginEmailUncheckedUpdateOneWithoutUserNestedInput
+  wallet?: Prisma.WalletUncheckedUpdateOneWithoutUserNestedInput
+  positions?: Prisma.TradePositionUncheckedUpdateManyWithoutUserNestedInput
+  transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput
+  processedDeposits?: Prisma.TransactionUncheckedUpdateManyWithoutAdminNestedInput
 }
 
+
+/**
+ * Count Type UserCountOutputType
+ */
+
+export type UserCountOutputType = {
+  positions: number
+  transactions: number
+  processedDeposits: number
+}
+
+export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  positions?: boolean | UserCountOutputTypeCountPositionsArgs
+  transactions?: boolean | UserCountOutputTypeCountTransactionsArgs
+  processedDeposits?: boolean | UserCountOutputTypeCountProcessedDepositsArgs
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserCountOutputType
+   */
+  select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPositionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TradePositionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TransactionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountProcessedDepositsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TransactionWhereInput
+}
 
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -633,6 +1155,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   twoFactorStatus?: boolean
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
   loginEmail?: boolean | Prisma.User$loginEmailArgs<ExtArgs>
+  wallet?: boolean | Prisma.User$walletArgs<ExtArgs>
+  positions?: boolean | Prisma.User$positionsArgs<ExtArgs>
+  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
+  processedDeposits?: boolean | Prisma.User$processedDepositsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -678,6 +1205,11 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   passwordResets?: boolean | Prisma.User$passwordResetsArgs<ExtArgs>
   loginEmail?: boolean | Prisma.User$loginEmailArgs<ExtArgs>
+  wallet?: boolean | Prisma.User$walletArgs<ExtArgs>
+  positions?: boolean | Prisma.User$positionsArgs<ExtArgs>
+  transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>
+  processedDeposits?: boolean | Prisma.User$processedDepositsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -687,6 +1219,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     passwordResets: Prisma.$PasswordResetPayload<ExtArgs> | null
     loginEmail: Prisma.$LoginEmailPayload<ExtArgs> | null
+    wallet: Prisma.$WalletPayload<ExtArgs> | null
+    positions: Prisma.$TradePositionPayload<ExtArgs>[]
+    transactions: Prisma.$TransactionPayload<ExtArgs>[]
+    processedDeposits: Prisma.$TransactionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1095,6 +1631,10 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   passwordResets<T extends Prisma.User$passwordResetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetsArgs<ExtArgs>>): Prisma.Prisma__PasswordResetClient<runtime.Types.Result.GetResult<Prisma.$PasswordResetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   loginEmail<T extends Prisma.User$loginEmailArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$loginEmailArgs<ExtArgs>>): Prisma.Prisma__LoginEmailClient<runtime.Types.Result.GetResult<Prisma.$LoginEmailPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  wallet<T extends Prisma.User$walletArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$walletArgs<ExtArgs>>): Prisma.Prisma__WalletClient<runtime.Types.Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  positions<T extends Prisma.User$positionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$positionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TradePositionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  transactions<T extends Prisma.User$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  processedDeposits<T extends Prisma.User$processedDepositsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$processedDepositsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1557,6 +2097,97 @@ export type User$loginEmailArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.LoginEmailInclude<ExtArgs> | null
   where?: Prisma.LoginEmailWhereInput
+}
+
+/**
+ * User.wallet
+ */
+export type User$walletArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Wallet
+   */
+  select?: Prisma.WalletSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Wallet
+   */
+  omit?: Prisma.WalletOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WalletInclude<ExtArgs> | null
+  where?: Prisma.WalletWhereInput
+}
+
+/**
+ * User.positions
+ */
+export type User$positionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TradePosition
+   */
+  select?: Prisma.TradePositionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TradePosition
+   */
+  omit?: Prisma.TradePositionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TradePositionInclude<ExtArgs> | null
+  where?: Prisma.TradePositionWhereInput
+  orderBy?: Prisma.TradePositionOrderByWithRelationInput | Prisma.TradePositionOrderByWithRelationInput[]
+  cursor?: Prisma.TradePositionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TradePositionScalarFieldEnum | Prisma.TradePositionScalarFieldEnum[]
+}
+
+/**
+ * User.transactions
+ */
+export type User$transactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Transaction
+   */
+  select?: Prisma.TransactionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Transaction
+   */
+  omit?: Prisma.TransactionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TransactionInclude<ExtArgs> | null
+  where?: Prisma.TransactionWhereInput
+  orderBy?: Prisma.TransactionOrderByWithRelationInput | Prisma.TransactionOrderByWithRelationInput[]
+  cursor?: Prisma.TransactionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
+}
+
+/**
+ * User.processedDeposits
+ */
+export type User$processedDepositsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Transaction
+   */
+  select?: Prisma.TransactionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Transaction
+   */
+  omit?: Prisma.TransactionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TransactionInclude<ExtArgs> | null
+  where?: Prisma.TransactionWhereInput
+  orderBy?: Prisma.TransactionOrderByWithRelationInput | Prisma.TransactionOrderByWithRelationInput[]
+  cursor?: Prisma.TransactionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TransactionScalarFieldEnum | Prisma.TransactionScalarFieldEnum[]
 }
 
 /**

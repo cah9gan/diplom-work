@@ -49,6 +49,9 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 
 export const ModelName = {
+  Wallet: 'Wallet',
+  TradePosition: 'TradePosition',
+  Transaction: 'Transaction',
   LoginEmail: 'LoginEmail',
   TrackedSymbol: 'TrackedSymbol',
   PasswordReset: 'PasswordReset',
@@ -69,6 +72,44 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 } as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const WalletScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  balance: 'balance',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WalletScalarFieldEnum = (typeof WalletScalarFieldEnum)[keyof typeof WalletScalarFieldEnum]
+
+
+export const TradePositionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  symbol: 'symbol',
+  amount: 'amount',
+  entryPrice: 'entryPrice',
+  tp: 'tp',
+  sl: 'sl',
+  status: 'status',
+  createdAt: 'createdAt'
+} as const
+
+export type TradePositionScalarFieldEnum = (typeof TradePositionScalarFieldEnum)[keyof typeof TradePositionScalarFieldEnum]
+
+
+export const TransactionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  adminId: 'adminId',
+  type: 'type',
+  amount: 'amount',
+  price: 'price',
+  createdAt: 'createdAt'
+} as const
+
+export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
 
 
 export const LoginEmailScalarFieldEnum = {

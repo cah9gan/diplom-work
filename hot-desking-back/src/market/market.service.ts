@@ -7,6 +7,8 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { SymbolsService } from './symbols.service';
 import { PredictService } from '../ai';
+import { PriceService } from './price.service';
+import { BinanceTicker24h } from './dto';
 
 interface CustomWebSocket extends WebSocket {
   connectionKey?: string;
@@ -25,6 +27,7 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     private readonly httpService: HttpService,
     private readonly symbolsService: SymbolsService,
     private readonly predictService: PredictService,
+    private readonly priceService: PriceService,
   ) {}
 
   async onModuleInit() {
@@ -109,6 +112,11 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
       const payload = JSON.parse(
         (data as Buffer).toString(),
       ) as BinanceKlinePayload;
+
+      // 1. ОБНОВЛЯЕМ ЦЕНУ В PRICE SERVICE (для торговли)
+      this.priceService.updatePrice(payload.s, parseFloat(payload.k.c));
+
+      // 2. ФОРМИРУЕМ ДАННЫЕ ДЛЯ ФРОНТЕНДА
       const formattedMessage: MarketStreamMessageDTO = {
         symbol: payload.s,
         interval: payload.k.i,
@@ -122,6 +130,8 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
           isClosed: payload.k.x,
         },
       };
+
+      // 3. ОТПРАВЛЯЕМ В GATEWAY
       this.marketGateway.broadcastMarketData(formattedMessage);
     });
 
@@ -132,7 +142,6 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
       );
     });
 
-    // 👇 ИСПРАВИЛИ: Убрали async и заменили await на классический .then()
     ws.on('close', () => {
       this.binanceSockets = this.binanceSockets.filter((s) => s !== ws);
       this.activeConnections.delete(connectionKey);
@@ -152,7 +161,7 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         })
         .catch((err: unknown) =>
           console.error(
-            `[Binance WS] Ошибка при проверке статуса монеты ${symbol}:`,
+            `[Binance WS] Ошибка при проверке статуса ${symbol}:`,
             err,
           ),
         );
@@ -193,5 +202,35 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     );
 
     return prediction;
+  }
+
+  // Получение мгновенной статистики 24h для карточек на фронтенде
+  public async getBulk24hStats(symbols: string[]) {
+    if (!symbols || symbols.length === 0) return [];
+
+    // Binance требует формат массива в виде строки: '["BTCUSDT","ETHUSDT"]'
+    const formattedSymbols = JSON.stringify(
+      symbols.map((s) => s.toUpperCase()),
+    );
+    const url = `https://api.binance.com/api/v3/ticker/24hr?symbols=${formattedSymbols}`;
+
+    try {
+      // 👇 1. Передаем <BinanceTicker24h[]> в метод get
+      const response = await firstValueFrom(
+        this.httpService.get<BinanceTicker24h[]>(url),
+      );
+
+      // 👇 2. Убираем any! TypeScript теперь знает, что ticker — это BinanceTicker24h
+      return response.data.map((ticker) => ({
+        symbol: ticker.symbol,
+        currentPrice: parseFloat(ticker.lastPrice),
+        high24h: parseFloat(ticker.highPrice),
+        low24h: parseFloat(ticker.lowPrice),
+        priceChangePercent: parseFloat(ticker.priceChangePercent),
+      }));
+    } catch (error) {
+      console.error('[Binance API] Ошибка загрузки 24h статистики:', error);
+      return [];
+    }
   }
 }

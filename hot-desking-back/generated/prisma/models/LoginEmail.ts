@@ -364,14 +364,6 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type StringFieldUpdateOperationsInput = {
-  set?: string
-}
-
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type LoginEmailCreateNestedOneWithoutUserInput = {
   create?: Prisma.XOR<Prisma.LoginEmailCreateWithoutUserInput, Prisma.LoginEmailUncheckedCreateWithoutUserInput>
   connectOrCreate?: Prisma.LoginEmailCreateOrConnectWithoutUserInput
