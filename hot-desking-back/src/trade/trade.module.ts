@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { TradeController } from './trade.controller';
 import { TradeService } from './trade.service';
 import { MarketModule } from '../market';
@@ -8,4 +8,13 @@ import { MarketModule } from '../market';
   providers: [TradeService],
   exports: [TradeService],
 })
-export class TradeModule {}
+export class TradeModule implements OnModuleInit {
+  constructor(private readonly tradeService: TradeService) {}
+
+  onModuleInit() {
+    setInterval(() => {
+      // Прибрали async/await і додали void
+      void this.tradeService.checkAndTriggerPriceOrders();
+    }, 1000);
+  }
+}

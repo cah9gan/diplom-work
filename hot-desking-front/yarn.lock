@@ -2178,10 +2178,10 @@ lightningcss@1.32.0:
     lightningcss-win32-arm64-msvc "1.32.0"
     lightningcss-win32-x64-msvc "1.32.0"
 
-lightweight-charts@^5.2.0:
-  version "5.2.0"
-  resolved "https://registry.npmjs.org/lightweight-charts/-/lightweight-charts-5.2.0.tgz"
-  integrity sha512-ey3Vas8UhV06ni+LT9TA1nEe4y8So4Mi6CL/oarNHFMyTktz/xy8e8+oh04Q//eO3t6etvFXgayz2fClyFQb5w==
+lightweight-charts@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.npmjs.org/lightweight-charts/-/lightweight-charts-4.1.1.tgz"
+  integrity sha512-HYjm66NAIOhoLDNaaQsiwOVWiFHL1yrygZeKd4PgdZESnWyp5dPoTe3pH3t2h4ix+Ix5TwLZaNbWroZqQuj6OA==
   dependencies:
     fancy-canvas "2.1.0"
 

@@ -104,7 +104,7 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
 
     ws.on('open', () => {
       console.log(
-        `[Binance WS] Подключено: ${symbol.toUpperCase()} (${interval})`,
+        `[Binance WS] Підключено: ${symbol.toUpperCase()} (${interval})`,
       );
     });
 
@@ -113,10 +113,8 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         (data as Buffer).toString(),
       ) as BinanceKlinePayload;
 
-      // 1. ОБНОВЛЯЕМ ЦЕНУ В PRICE SERVICE (для торговли)
       this.priceService.updatePrice(payload.s, parseFloat(payload.k.c));
 
-      // 2. ФОРМИРУЕМ ДАННЫЕ ДЛЯ ФРОНТЕНДА
       const formattedMessage: MarketStreamMessageDTO = {
         symbol: payload.s,
         interval: payload.k.i,
@@ -131,13 +129,12 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         },
       };
 
-      // 3. ОТПРАВЛЯЕМ В GATEWAY
       this.marketGateway.broadcastMarketData(formattedMessage);
     });
 
     ws.on('error', (error) => {
       console.error(
-        `[Binance WS] Ошибка потока ${symbol} (${interval}):`,
+        `[Binance WS] Помилка потоку ${symbol} (${interval}):`,
         error,
       );
     });
@@ -151,7 +148,7 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         .then((isActive) => {
           if (isActive) {
             console.log(
-              `[Binance WS] Переподключение ${symbol} (${interval})...`,
+              `[Binance WS] Перепідключення ${symbol} (${interval})...`,
             );
             setTimeout(
               () => this.connectToBinanceStream(symbol, interval),
@@ -161,32 +158,28 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         })
         .catch((err: unknown) =>
           console.error(
-            `[Binance WS] Ошибка при проверке статуса ${symbol}:`,
+            `[Binance WS] Помилка під час перевірки статусу ${symbol}:`,
             err,
           ),
         );
     });
   }
+
   public async removeTrackedSymbol(symbol: string) {
     const normalizedSymbol = symbol.toLowerCase().trim();
 
-    // 1. Помечаем в БД как неактивную
     await this.symbolsService.deactivateSymbol(normalizedSymbol);
 
-    // 2. Находим все открытые сокеты для этой монеты и жестко их закрываем
     const socketsToClose = this.binanceSockets.filter((ws) =>
       (ws as CustomWebSocket).connectionKey?.startsWith(`${normalizedSymbol}_`),
     );
 
     socketsToClose.forEach((ws) => ws.close());
-    // Примечание: они не переподключатся, потому что обработчик 'close'
-    // проверит БД и увидит, что isActive === false!
   }
-  // Получить мгновенный прогноз по запросу (для REST API)
+
   public async getInstantPrediction(symbol: string, interval: string = '1d') {
     const history = await this.getHistory(symbol, interval);
 
-    // Если истории недостаточно для окна нейросети
     if (history.length < 60) {
       return { trend: 'neutral', confidence: 0 };
     }
@@ -194,7 +187,6 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     const priceBuffer = history.slice(-60).map((h) => h.close);
     const currentPrice = priceBuffer[priceBuffer.length - 1];
 
-    // 👇 Запрашиваем прогноз, ПЕРЕДАЕМ interval третьим аргументом 👇
     const prediction = await this.predictService.predictLstm(
       priceBuffer,
       currentPrice,
@@ -204,23 +196,19 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     return prediction;
   }
 
-  // Получение мгновенной статистики 24h для карточек на фронтенде
   public async getBulk24hStats(symbols: string[]) {
     if (!symbols || symbols.length === 0) return [];
 
-    // Binance требует формат массива в виде строки: '["BTCUSDT","ETHUSDT"]'
     const formattedSymbols = JSON.stringify(
       symbols.map((s) => s.toUpperCase()),
     );
     const url = `https://api.binance.com/api/v3/ticker/24hr?symbols=${formattedSymbols}`;
 
     try {
-      // 👇 1. Передаем <BinanceTicker24h[]> в метод get
       const response = await firstValueFrom(
         this.httpService.get<BinanceTicker24h[]>(url),
       );
 
-      // 👇 2. Убираем any! TypeScript теперь знает, что ticker — это BinanceTicker24h
       return response.data.map((ticker) => ({
         symbol: ticker.symbol,
         currentPrice: parseFloat(ticker.lastPrice),
@@ -229,7 +217,10 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
         priceChangePercent: parseFloat(ticker.priceChangePercent),
       }));
     } catch (error) {
-      console.error('[Binance API] Ошибка загрузки 24h статистики:', error);
+      console.error(
+        '[Binance API] Помилка завантаження 24h статистики:',
+        error,
+      );
       return [];
     }
   }

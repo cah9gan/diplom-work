@@ -76,6 +76,13 @@ export function Header() {
             Головна
           </Link>
           
+          <Link 
+            href="/news" 
+            className={`text-sm font-bold tracking-wide transition-colors hover:text-white ${pathname === "/news" ? "text-orange-400" : "text-zinc-400"}`}
+          >
+            Новини
+          </Link>
+
           {isLoggedIn && (
             <Link 
               href="/market" 

@@ -2,14 +2,13 @@ import {
   BadRequestException,
   NotFoundException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { CreateOrderDTO } from './dto';
 import { PriceService } from '../market/price.service';
 import { Decimal } from 'decimal.js';
 
-// Вытаскиваем тип из твоего рабочего PrismaService, исключая сам метод $transaction.
-// Это решает проблему "any" для линтера раз и навсегда.
 type TransactionDb = Omit<PrismaService, '$transaction'>;
 
 interface OrderContext {
@@ -18,10 +17,14 @@ interface OrderContext {
   amount: Decimal;
   cost: Decimal;
   price: number;
+  stopLoss?: number;
+  takeProfit?: number;
 }
 
 @Injectable()
 export class TradeService {
+  private readonly logger = new Logger(TradeService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly priceService: PriceService,
@@ -35,13 +38,14 @@ export class TradeService {
     const amount = new Decimal(dto.amount);
     const cost = amount.mul(marketPrice);
 
-    // Пакуем всё в один аккуратный объект
     const ctx: OrderContext = {
       userId,
       symbol: dto.symbol,
       amount,
       cost,
       price: marketPrice,
+      stopLoss: dto.stopLoss,
+      takeProfit: dto.takeProfit,
     };
 
     return this.prisma.$transaction(async (tx) => {
@@ -62,6 +66,68 @@ export class TradeService {
     });
   }
 
+  // ---------------------------------------------------------
+  // 🔥 АВТОМАТИЧНЕ ЗАКРИТТЯ ПО SL / TP (Викликається фоновим таском)
+  // ---------------------------------------------------------
+  public async checkAndTriggerPriceOrders() {
+    const positions = await this.prisma.tradePosition.findMany({
+      where: {
+        status: 'OPEN',
+        OR: [{ sl: { not: null } }, { tp: { not: null } }],
+      },
+    });
+
+    for (const pos of positions) {
+      let currentPrice: number;
+
+      try {
+        // Обертаємо запит ціни у try/catch
+        currentPrice = this.priceService.getLatestPrice(pos.symbol);
+      } catch {
+        // Якщо ціни ще немає (сервер тільки-но запустився),
+        // просто пропускаємо цю монету і перевіримо її через секунду
+        continue;
+      }
+
+      let shouldClose = false;
+      let triggerReason = '';
+
+      const stopLoss = pos.sl ? Number(pos.sl) : null;
+      const takeProfit = pos.tp ? Number(pos.tp) : null;
+
+      if (stopLoss && currentPrice <= stopLoss) {
+        shouldClose = true;
+        triggerReason = 'STOP_LOSS';
+      }
+
+      if (takeProfit && currentPrice >= takeProfit) {
+        shouldClose = true;
+        triggerReason = 'TAKE_PROFIT';
+      }
+
+      if (shouldClose) {
+        this.logger.log(
+          `🚨 Спрацював ордер [${triggerReason}] для користувача ${pos.userId} по монеті ${pos.symbol} (Ціна: ${currentPrice})`,
+        );
+
+        const mockDto: CreateOrderDTO = {
+          symbol: pos.symbol,
+          amount: Number(pos.amount),
+          type: 'SELL',
+        };
+
+        try {
+          await this.executeOrder(pos.userId, mockDto);
+        } catch (err) {
+          this.logger.error(
+            `Не вдалося автоматично закрити ордер для ${pos.userId}:`,
+            err,
+          );
+        }
+      }
+    }
+  }
+
   public async adminDeposit(
     adminId: string,
     targetUserId: string,
@@ -69,23 +135,20 @@ export class TradeService {
   ) {
     return this.prisma.$transaction(async (tx) => {
       const db = tx as unknown as TransactionDb;
-
       const wallet = await db.wallet.upsert({
         where: { userId: targetUserId },
         update: { balance: { increment: amount } },
         create: { userId: targetUserId, balance: amount },
       });
-
       await db.transaction.create({
         data: {
           userId: targetUserId,
-          adminId: adminId, // 👈 Записываем админа в базу
+          adminId: adminId,
           type: 'DEPOSIT',
           amount,
           price: 1,
         },
       });
-
       return wallet;
     });
   }
@@ -110,6 +173,7 @@ export class TradeService {
       data: { balance: { decrement: ctx.cost.toString() } },
     });
 
+    // 👇 Записуємо stopLoss та takeProfit у відповідні поля БД: sl та tp
     await db.tradePosition.create({
       data: {
         userId: ctx.userId,
@@ -117,6 +181,8 @@ export class TradeService {
         amount: ctx.amount.toString(),
         entryPrice: ctx.price,
         status: 'OPEN',
+        sl: ctx.stopLoss ?? null,
+        tp: ctx.takeProfit ?? null,
       },
     });
 
@@ -207,26 +273,20 @@ export class TradeService {
     });
 
     const walletBalance = Number(user?.wallet?.balance || 0);
-
     let totalUnrealizedPnL = 0;
-    let totalPositionValue = 0; // 👈 1. Добавляем счетчик общей стоимости активов
+    let totalPositionValue = 0;
 
     const activePositions =
       user?.positions.map((pos) => {
-        // Получаем актуальную цену из PriceService
-        const currentPrice = this.priceService.getPrice(pos.symbol);
-
-        // Сколько денег потратили при покупке
+        const currentPrice = this.priceService.getLatestPrice(pos.symbol);
         const entryValue = Number(pos.amount) * Number(pos.entryPrice);
-        // Сколько эти монеты стоят прямо сейчас
         const currentValue = Number(pos.amount) * currentPrice;
-
         const profit = currentValue - entryValue;
         const profitPercentage =
           entryValue > 0 ? (profit / entryValue) * 100 : 0;
 
         totalUnrealizedPnL += profit;
-        totalPositionValue += currentValue; // 👈 2. Плюсуем текущую стоимость монеты в общую копилку
+        totalPositionValue += currentValue;
 
         return {
           id: pos.id,
@@ -236,15 +296,16 @@ export class TradeService {
           currentPrice,
           profit,
           profitPercentage,
+          stopLoss: pos.sl ? Number(pos.sl) : null, // 👈 Віддаємо на фронт як stopLoss
+          takeProfit: pos.tp ? Number(pos.tp) : null, // 👈 Віддаємо на фронт як takeProfit
         };
       }) || [];
 
-    // 👇 3. ПРАВИЛЬНЫЙ РАСЧЕТ КАПИТАЛА: Свободный кэш + Стоимость всех активов
     const totalEquity = walletBalance + totalPositionValue;
 
     return {
       walletBalance,
-      totalEquity, // Теперь тут будет честная сумма (например, $10,029.65)
+      totalEquity,
       totalUnrealizedPnL,
       activePositions,
     };

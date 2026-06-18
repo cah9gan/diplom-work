@@ -1,6 +1,6 @@
 "use client";
-import { PortfolioChart } from "@/src/components/PortfolioChart";
-import { useEffect, useState } from "react";
+import PortfolioChart from "@/src/components/PortfolioChart";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "@/src/lib/api-client";
 
@@ -49,32 +49,36 @@ export default function ProfilePage() {
   const [isResetting, setIsResetting] = useState(false);
   const [isUpdating2FA, setIsUpdating2FA] = useState(false);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Делаем два запроса параллельно для скорости
-        const [profileRes, portfolioRes] = await Promise.all([
-          apiClient.get("/profile"),
-          apiClient.get("/trade/portfolio").catch(() => ({ data: null })) // Защита от ошибки, если кошелька еще нет
-        ]);
+  // Состояние быстрого продажу
+  const [sellingSymbol, setSellingSymbol] = useState<string | null>(null);
 
-        setUser(profileRes.data);
-        setEditFirstName(profileRes.data.firstName);
-        setEditLastName(profileRes.data.lastName);
-        
-        if (portfolioRes.data) {
-          setPortfolio(portfolioRes.data);
-        }
-      } catch {
-        localStorage.removeItem("token");
-        router.push("/login");
-      } finally {
-        setIsLoading(false);
+  const loadData = useCallback(async () => {
+    try {
+      const [profileRes, portfolioRes] = await Promise.all([
+        apiClient.get("/profile"),
+        apiClient.get("/trade/portfolio").catch(() => ({ data: null }))
+      ]);
+
+      setUser(profileRes.data);
+      setEditFirstName(profileRes.data.firstName);
+      setEditLastName(profileRes.data.lastName);
+      
+      if (portfolioRes.data) {
+        setPortfolio(portfolioRes.data);
       }
-    };
-    
-    loadData();
+    } catch {
+      localStorage.removeItem("token");
+      router.push("/login");
+    } finally {
+      setIsLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    // 👇 Говоримо лінтеру не панікувати, бо наша функція асинхронна
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -124,6 +128,32 @@ export default function ProfilePage() {
     }
   };
 
+  const handleQuickSell = async (symbol: string, amount: number) => {
+    const coinName = symbol.replace("USDT", "");
+    
+    if (!confirm(`Ви впевнені, що хочете продати всі ${amount} ${coinName}?`)) {
+      return;
+    }
+
+    setSellingSymbol(symbol);
+    try {
+      await apiClient.post("/trade/order", {
+        symbol: symbol,
+        amount: amount,
+        type: "SELL",
+      });
+
+      alert(`✅ Успішно продано ${coinName}!`);
+      await loadData();
+    } catch (error) {
+      // 👇 Сувора типізація замість 'any'. TS тепер знає, що ми шукаємо message
+      const err = error as { response?: { data?: { message?: string } } };
+      alert(`❌ Помилка: ${err.response?.data?.message || "Не вдалося продати"}`);
+    } finally {
+      setSellingSymbol(null);
+    }
+  };
+
   if (isLoading) return <div className="text-center py-20 animate-pulse text-orange-500 font-bold uppercase tracking-widest">Завантаження...</div>;
 
   return (
@@ -166,7 +196,7 @@ export default function ProfilePage() {
             <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">{user?.role}</span>
           </div>
 
-          {/* 👇 НОВЫЙ БЛОК: ПОРТФЕЛЬ */}
+          {/* ПОРТФЕЛЬ */}
           {portfolio && (
             <div className="border-t border-zinc-800/80 pt-8 mb-8">
               <h2 className="text-xl font-bold text-white mb-5">Фінансове зведення</h2>
@@ -209,19 +239,22 @@ export default function ProfilePage() {
                 {portfolio.activePositions.length === 0 ? (
                   <div className="p-8 text-center text-zinc-500">У вас поки немає куплених монет.</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-sm text-left whitespace-nowrap">
                       <thead className="text-xs text-zinc-500 uppercase bg-zinc-900/30">
                         <tr>
                           <th className="px-5 py-3 font-medium">Актив</th>
                           <th className="px-5 py-3 font-medium text-right">Кількість</th>
                           <th className="px-5 py-3 font-medium text-right">Ціна входу / Поточна</th>
                           <th className="px-5 py-3 font-medium text-right">PnL</th>
+                          <th className="px-5 py-3 font-medium text-right">Дія</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800/50">
                         {portfolio.activePositions.map((pos) => {
                           const isProfit = pos.profit >= 0;
+                          const isSelling = sellingSymbol === pos.symbol;
+                          
                           return (
                             <tr key={pos.id} className="hover:bg-zinc-800/20 transition-colors">
                               <td className="px-5 py-4">
@@ -242,6 +275,19 @@ export default function ProfilePage() {
                                 <div className={`text-xs ${isProfit ? 'text-green-500/70' : 'text-red-500/70'}`}>
                                   {isProfit ? '+' : ''}{pos.profitPercentage.toFixed(2)}%
                                 </div>
+                              </td>
+                              <td className="px-5 py-4 text-right">
+                                <button
+                                  onClick={() => handleQuickSell(pos.symbol, pos.amount)}
+                                  disabled={isSelling}
+                                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                    isSelling 
+                                      ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" 
+                                      : "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-red-950 shadow-sm"
+                                  }`}
+                                >
+                                  {isSelling ? "ОБРОБКА..." : "ПРОДАТИ ВСЕ"}
+                                </button>
                               </td>
                             </tr>
                           );

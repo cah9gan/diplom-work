@@ -51,6 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: "/admin/users", label: "Користувачі", icon: "👥" },
     { href: "/admin/symbols", label: "Управління монетами", icon: "📈" },
+    { href: "/admin/news", label: "Новини (Оголошення)", icon: "📰" },
   ];
 
   return (

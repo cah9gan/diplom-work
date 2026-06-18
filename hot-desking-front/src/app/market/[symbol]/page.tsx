@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { createChart, IChartApi, ISeriesApi, Time, CandlestickSeries, IPriceLine } from "lightweight-charts";
+import { createChart, IChartApi, ISeriesApi, Time, IPriceLine } from "lightweight-charts";
+import { useChartArrows } from '@/src/hooks/useChartArrows';
 
 interface StreamKline {
   time: number;
@@ -121,9 +122,12 @@ export default function CoinPage() {
   const [isTrading, setIsTrading] = useState<boolean>(false);
   const [tradeMessage, setTradeMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // 👇 НОВЫЕ СОСТОЯНИЯ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ ВВОДА 👇
   const [inputValue, setInputValue] = useState<string>("");
   const [inputCurrency, setInputCurrency] = useState<'BASE' | 'QUOTE'>('BASE');
+
+  // 👇 ДОДАНО: Стани для Stop Loss та Take Profit
+  const [stopLoss, setStopLoss] = useState<string>("");
+  const [takeProfit, setTakeProfit] = useState<string>("");
 
   const aiIntervalRef = useRef(aiInterval);
   useEffect(() => {
@@ -134,6 +138,8 @@ export default function CoinPage() {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const aiLineRef = useRef<IPriceLine | null>(null);
+
+  const { isDrawingMode, toggleDrawingMode, clearArrows, initDrawing, restoreMarkers } = useChartArrows();
 
   const fetchPortfolio = useCallback(async () => {
     try {
@@ -158,11 +164,8 @@ export default function CoinPage() {
   }, [symbol]);
 
   useEffect(() => {
-    const initPortfolio = async () => {
-      await fetchPortfolio();
-    };
-
-    initPortfolio();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPortfolio();
   }, [fetchPortfolio]);
 
   useEffect(() => {
@@ -176,7 +179,7 @@ export default function CoinPage() {
       timeScale: { timeVisible: true, secondsVisible: false },
     });
 
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+    const candlestickSeries = chart.addCandlestickSeries({
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderVisible: false,
@@ -186,6 +189,8 @@ export default function CoinPage() {
 
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
+
+    initDrawing(chart, candlestickSeries);
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
@@ -197,8 +202,10 @@ export default function CoinPage() {
     return () => {
       window.removeEventListener("resize", handleResize);
       chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
     };
-  }, []);
+  }, [initDrawing]);
 
   useEffect(() => {
     if (!seriesRef.current) return;
@@ -274,6 +281,8 @@ export default function CoinPage() {
           if (seriesRef.current && chartRef.current) {
             seriesRef.current.setData(formattedData);
             chartRef.current.timeScale().fitContent(); 
+            
+            restoreMarkers();
           }
           if (formattedData.length > 0) {
             setCurrentPrice(formattedData[formattedData.length - 1].close);
@@ -312,7 +321,7 @@ export default function CoinPage() {
     return () => {
       socket.disconnect();
     };
-  }, [symbol, activeInterval]);
+  }, [symbol, activeInterval, restoreMarkers]); 
 
   const setTimeRange = useCallback((seconds: number | "ALL") => {
     setActiveRange(String(seconds));
@@ -328,18 +337,17 @@ export default function CoinPage() {
     }
   }, []);
 
-  // 👇 ЛОГИКА РАСЧЕТОВ 👇
   const parsedInput = Number(inputValue) || 0;
   let calculatedAmountBase = 0;
   let calculatedCostQuote = 0;
 
   if (currentPrice) {
     if (inputCurrency === 'BASE') {
-      calculatedAmountBase = parsedInput; // Пользователь ввел кол-во BTC
-      calculatedCostQuote = parsedInput * currentPrice; // Считаем стоимость в USDT
+      calculatedAmountBase = parsedInput; 
+      calculatedCostQuote = parsedInput * currentPrice; 
     } else {
-      calculatedCostQuote = parsedInput; // Пользователь ввел сумму в USDT
-      calculatedAmountBase = parsedInput / currentPrice; // Считаем кол-во BTC
+      calculatedCostQuote = parsedInput; 
+      calculatedAmountBase = parsedInput / currentPrice; 
     }
   }
 
@@ -354,7 +362,10 @@ export default function CoinPage() {
       setTradeMessage(null);
       const token = localStorage.getItem("token");
 
-      // Бэкенд всегда ждет количество в базовом активе (BTC)
+      // 👇 ДОДАНО: Конвертуємо SL/TP в числа і відправляємо тільки якщо вони є
+      const slValue = Number(stopLoss);
+      const tpValue = Number(takeProfit);
+
       const res = await fetch(`http://localhost:3000/trade/order`, {
         method: 'POST',
         headers: {
@@ -364,7 +375,9 @@ export default function CoinPage() {
         body: JSON.stringify({
           symbol: symbol.toUpperCase(),
           amount: calculatedAmountBase, 
-          type
+          type,
+          ...(slValue > 0 && { stopLoss: slValue }),
+          ...(tpValue > 0 && { takeProfit: tpValue })
         })
       });
 
@@ -373,6 +386,8 @@ export default function CoinPage() {
       if (res.ok) {
         setTradeMessage({ type: 'success', text: `Ордер ${type} успішно виконано!` });
         setInputValue("");
+        setStopLoss("");   // Очищаємо поля після успіху
+        setTakeProfit(""); // Очищаємо поля після успіху
         fetchPortfolio();
       } else {
         setTradeMessage({ type: 'error', text: data.message || 'Помилка виконання ордера' });
@@ -393,8 +408,6 @@ export default function CoinPage() {
       </Link>
 
       <div className="flex flex-col xl:flex-row gap-6">
-        
-        {/* ЛЕВАЯ ЧАСТЬ: График и статистика */}
         <div className="flex-1 bg-zinc-900/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/50 border border-zinc-800 p-6 sm:p-8">
           <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center mb-8 border-b border-zinc-800/80 pb-6 gap-6">
             <div className="flex flex-col gap-2">
@@ -413,8 +426,36 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* Настройки графика и ИИ */}
-            <div className="flex flex-wrap gap-4 justify-start 2xl:justify-end">
+            <div className="flex flex-wrap gap-4 justify-start 2xl:justify-end items-center">
+              
+              {/* Інструменти малювання */}
+              <div className="flex items-center gap-2 mr-4 border-r border-zinc-800/80 pr-4">
+                <button
+                  onClick={toggleDrawingMode}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
+                    isDrawingMode 
+                      ? 'bg-purple-500 text-zinc-950 shadow-md shadow-purple-500/20' 
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-700 hover:text-purple-400'
+                  }`}
+                  title="Клікніть по графіку, щоб додати стрілку"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                  </svg>
+                  {isDrawingMode ? "Малювання Увімк." : "Малювати"}
+                </button>
+                <button
+                  onClick={clearArrows}
+                  className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-all border border-transparent"
+                  title="Очистити всі стрілки"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Прогноз */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Прогноз:</span>
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
@@ -434,6 +475,7 @@ export default function CoinPage() {
                 </div>
               </div>
 
+              {/* Свічки */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Свічки:</span>
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
@@ -451,6 +493,7 @@ export default function CoinPage() {
                 </div>
               </div>
 
+              {/* Масштаб */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Масштаб:</span>
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800">
@@ -473,12 +516,11 @@ export default function CoinPage() {
           <div ref={chartContainerRef} className="w-full h-125 rounded-xl overflow-hidden border border-zinc-800/50" />
         </div>
 
-        {/* ПРАВАЯ ЧАСТЬ: Торговая панель */}
+        {/* Торгова панель */}
         <div className="w-full xl:w-96 flex flex-col gap-6">
           <div className="bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-zinc-800 p-6 shadow-xl">
             <h2 className="text-xl font-bold text-white mb-6">Торгівля</h2>
             
-            {/* Балансы */}
             <div className="flex justify-between items-center bg-zinc-950/50 p-4 rounded-xl border border-zinc-800/50 mb-6">
               <div>
                 <p className="text-[10px] text-zinc-500 font-bold mb-1 uppercase tracking-wider">Доступно USDT</p>
@@ -490,7 +532,6 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* 👇 ОБНОВЛЕННЫЙ ВВОД 👇 */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -525,7 +566,6 @@ export default function CoinPage() {
                 </span>
               </div>
               
-              {/* Оценка */}
               <div className="flex justify-between mt-3 px-1">
                 <span className="text-xs font-medium text-zinc-500">Оцінка угоди:</span>
                 <span className="text-xs font-bold text-white">
@@ -537,7 +577,41 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* Оповещения */}
+            {/* 👇 ДОДАНО: Поля для введення Stop Loss та Take Profit */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">
+                  Stop Loss
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={stopLoss}
+                    onChange={(e) => setStopLoss(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  />
+                  <span className="absolute right-3 top-2.5 text-xs text-zinc-600 font-bold">USDT</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">
+                  Take Profit
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={takeProfit}
+                    onChange={(e) => setTakeProfit(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  />
+                  <span className="absolute right-3 top-2.5 text-xs text-zinc-600 font-bold">USDT</span>
+                </div>
+              </div>
+            </div>
+
             {tradeMessage && (
               <div className={`p-3 rounded-xl mb-6 text-sm font-bold ${
                 tradeMessage.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
@@ -546,7 +620,6 @@ export default function CoinPage() {
               </div>
             )}
 
-            {/* Кнопки */}
             <div className="flex gap-4">
               <button
                 onClick={() => handleTrade('BUY')}

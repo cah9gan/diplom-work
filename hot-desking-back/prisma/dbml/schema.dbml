@@ -1,0 +1,117 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Announcement {
+  id String [pk]
+  title String [not null]
+  content String
+  sentiment String [not null, default: 'ANNOUNCEMENT']
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table wallet {
+  id String [pk]
+  userId String [unique, not null]
+  user user [not null]
+  balance Decimal [not null, default: 0]
+  updatedAt DateTime [not null]
+}
+
+Table trade_position {
+  id String [pk]
+  userId String [not null]
+  user user [not null]
+  symbol String [not null]
+  amount Decimal [not null]
+  entryPrice Decimal [not null]
+  tp Decimal
+  sl Decimal
+  status String [not null, default: 'OPEN']
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table transaction {
+  id String [pk]
+  userId String [not null]
+  user user [not null]
+  adminId String
+  admin user
+  type String [not null]
+  amount Decimal [not null]
+  price Decimal [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table login_email {
+  userId String [pk]
+  user user [not null]
+  attempts Int [not null, default: 0]
+  code String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  expiresAt DateTime [not null]
+}
+
+Table tracked_symbol {
+  id String [pk]
+  symbol String [unique, not null]
+  name String
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table password_reset {
+  userId String [pk]
+  user user [not null]
+  attempts Int [not null, default: 0]
+  code String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  expiresAt DateTime [not null]
+}
+
+Table user {
+  id String [pk]
+  role UserRole [not null]
+  firstName String [not null]
+  lastName String [not null]
+  email String [unique, not null]
+  hash String
+  status UserStatus [not null]
+  createdAt DateTime [default: `now()`, not null]
+  createdBy String [not null]
+  twoFactorStatus TwoFactorStatus [not null, default: 'active']
+  passwordResets password_reset
+  loginEmail login_email
+  wallet wallet
+  positions trade_position [not null]
+  transactions transaction [not null]
+  processedDeposits transaction [not null]
+}
+
+Enum UserRole {
+  admin
+  user
+}
+
+Enum UserStatus {
+  active
+  banned
+}
+
+Enum TwoFactorStatus {
+  active
+  inactive
+}
+
+Ref: wallet.userId - user.id [delete: Cascade]
+
+Ref: trade_position.userId > user.id [delete: Cascade]
+
+Ref: transaction.userId > user.id [delete: Cascade]
+
+Ref: transaction.adminId > user.id [delete: Cascade]
+
+Ref: login_email.userId - user.id [delete: Cascade]
+
+Ref: password_reset.userId - user.id
