@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-// Структура самой свечи (в нормальном, человекочитаемом виде)
+// Структура самої свічки (у нормальному, людиночитабельному вигляді)
 export class StreamKlineDTO {
   @ApiProperty()
   time: number;

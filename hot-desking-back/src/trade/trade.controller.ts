@@ -13,7 +13,6 @@ import { TradeService } from './trade.service';
 import { CreateOrderDTO } from './dto/create-order.dto';
 import { AdminDepositDTO } from './dto/admin-deposit.dto';
 
-// Импортируем твои общие декораторы и гварды
 import {
   AccessGuard,
   Roles,
@@ -25,13 +24,13 @@ import { type JWTUser } from '../auth/models';
 import { UserRole } from './dto';
 
 @ApiBearerAuth(SWAGGER_BEARER_NAME)
-@UseGuards(AccessGuard) // Защищаем весь контроллер
+@UseGuards(AccessGuard)
 @Controller('trade')
 export class TradeController {
   constructor(private readonly tradeService: TradeService) {}
 
   // ---------------------------------------------------------
-  // ТОРГОВЛЯ (Доступно всем авторизованным пользователям)
+  // ТОРГОВЛЯ (Доступна всім авторизованим користувачам)
   // ---------------------------------------------------------
 
   @Post('order')
@@ -51,15 +50,15 @@ export class TradeController {
   }
 
   // ---------------------------------------------------------
-  // АДМИН ПАНЕЛЬ (Доступно только администраторам)
+  // АДМІН ПАНЕЛЬ (Доступна тільки адміністраторам)
   // ---------------------------------------------------------
 
-  @Roles(UserRole.Admin) // 👈 Ограничиваем доступ только для админов
+  @Roles(UserRole.Admin)
   @Post('deposit/:id')
   @HttpCode(HttpStatus.OK)
   async adminDeposit(
     @User() admin: JWTUser,
-    @Param() { id }: IdParamDTO, // id пользователя, которому зачисляем деньги
+    @Param() { id }: IdParamDTO,
     @Body() dto: AdminDepositDTO,
   ) {
     return this.tradeService.adminDeposit(admin.userId, id, dto.amount);

@@ -6,12 +6,9 @@ import { NewsService } from './news.service';
 import { CoinGeckoService } from './coingecko.service';
 
 @Module({
-  imports: [
-    PrismaModule,
-    HttpModule, // Обязательно для работы this.httpService.get()
-  ],
+  imports: [PrismaModule, HttpModule],
   controllers: [NewsController],
   providers: [NewsService, CoinGeckoService],
-  exports: [NewsService], // На случай, если новости понадобятся другим модулям
+  exports: [NewsService],
 })
 export class NewsModule {}

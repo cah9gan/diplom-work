@@ -1,8 +1,8 @@
 export interface NewsItem {
   id: string;
   title: string;
-  content?: string; // Текст или ссылка на источник
-  source: 'SYSTEM' | 'CRYPTOPANIC'; // Чтобы фронт понимал, системная это новость или внешняя
+  content?: string;
+  source: 'SYSTEM' | 'CRYPTOPANIC';
   sentiment: 'ANNOUNCEMENT' | 'BULLISH' | 'BEARISH' | 'NEUTRAL';
   publishedAt: Date;
   url?: string;

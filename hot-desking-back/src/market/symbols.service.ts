@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -54,7 +53,6 @@ export class SymbolsService implements OnModuleInit {
   async addSymbol(symbol: string, name?: string) {
     const normalizedSymbol = symbol.toLowerCase().trim();
 
-    // 👇 Добавили недостающий await, о котором справедливо просил линтер
     return await this.prisma.trackedSymbol.upsert({
       where: { symbol: normalizedSymbol },
       update: { isActive: true, name },

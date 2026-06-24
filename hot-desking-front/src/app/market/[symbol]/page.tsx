@@ -63,7 +63,8 @@ const RANGE_OPTIONS: Record<string, { label: string; seconds: number | "ALL" }[]
   ]
 };
 
-const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPrediction | null, isLoading: boolean }) => {
+// 👇 Додали title у пропси для перевикористання
+const AiPredictionDisplay = ({ prediction, isLoading, title }: { prediction: MarketPrediction | null, isLoading: boolean, title: string }) => {
   if (isLoading) {
     return (
       <div className="flex items-center gap-4 px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-950/50 animate-pulse">
@@ -85,7 +86,7 @@ const AiPredictionDisplay = ({ prediction, isLoading }: { prediction: MarketPred
   return (
     <div className={`flex items-center gap-4 px-4 py-2 rounded-xl border ${currentConf.color}`}>
       <div className="flex flex-col">
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">AI Ensemble</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">{title}</span>
         <span className="text-sm font-bold">{currentConf.label}</span>
       </div>
       <div className="flex flex-col items-end">
@@ -110,8 +111,14 @@ export default function CoinPage() {
   const quoteAsset = "USDT";
 
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  
+  // Стани для звичайного прогнозу
   const [prediction, setPrediction] = useState<MarketPrediction | null>(null);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  
+  // 👇 Стани для ансамблю
+  const [ensemblePrediction, setEnsemblePrediction] = useState<MarketPrediction | null>(null);
+  const [isEnsembleLoading, setIsEnsembleLoading] = useState<boolean>(false);
   
   const [activeInterval, setActiveInterval] = useState<string>("1d");
   const [aiInterval, setAiInterval] = useState<string>("1d");
@@ -125,7 +132,6 @@ export default function CoinPage() {
   const [inputValue, setInputValue] = useState<string>("");
   const [inputCurrency, setInputCurrency] = useState<'BASE' | 'QUOTE'>('BASE');
 
-  // 👇 ДОДАНО: Стани для Stop Loss та Take Profit
   const [stopLoss, setStopLoss] = useState<string>("");
   const [takeProfit, setTakeProfit] = useState<string>("");
 
@@ -137,9 +143,11 @@ export default function CoinPage() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  
   const aiLineRef = useRef<IPriceLine | null>(null);
+  const ensembleLineRef = useRef<IPriceLine | null>(null); // 👇 Лінія для ансамблю
 
-  const { isDrawingMode, toggleDrawingMode, clearArrows, initDrawing, restoreMarkers } = useChartArrows();
+  const { initDrawing, restoreMarkers } = useChartArrows();
 
   const fetchPortfolio = useCallback(async () => {
     try {
@@ -207,6 +215,7 @@ export default function CoinPage() {
     };
   }, [initDrawing]);
 
+  // Малюємо лінію звичайного прогнозу
   useEffect(() => {
     if (!seriesRef.current) return;
 
@@ -227,6 +236,28 @@ export default function CoinPage() {
     }
   }, [prediction, aiInterval]);
 
+  // 👇 Малюємо лінію ансамбль-прогнозу
+  useEffect(() => {
+    if (!seriesRef.current) return;
+
+    if (ensembleLineRef.current) {
+      seriesRef.current.removePriceLine(ensembleLineRef.current);
+      ensembleLineRef.current = null;
+    }
+
+    if (ensemblePrediction && ensemblePrediction.targetPrice) {
+      ensembleLineRef.current = seriesRef.current.createPriceLine({
+        price: ensemblePrediction.targetPrice,
+        color: '#a855f7', // Фіолетовий колір для відмінності
+        lineWidth: 2,
+        lineStyle: 1, // Суцільна лінія
+        axisLabelVisible: true,
+        title: `Ансамбль Ціль`,
+      });
+    }
+  }, [ensemblePrediction]);
+
+  // Завантаження звичайного прогнозу
   useEffect(() => {
     const fetchPrediction = async () => {
       try {
@@ -251,6 +282,32 @@ export default function CoinPage() {
 
     fetchPrediction();
   }, [symbol, aiInterval]);
+
+  // 👇 Завантаження ансамбль-прогнозу (не залежить від aiInterval, тільки від symbol)
+  useEffect(() => {
+    const fetchEnsemblePrediction = async () => {
+      try {
+        setIsEnsembleLoading(true);
+        const token = localStorage.getItem("token");
+        const headers = { Authorization: `Bearer ${token}` };
+
+        const res = await fetch(`http://localhost:3000/market/predict-ensemble/${symbol}`, { headers });
+        if (res.ok) {
+          const predData = await res.json();
+          setEnsemblePrediction(predData);
+        } else {
+          setEnsemblePrediction(null);
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки ансамбля:", error);
+        setEnsemblePrediction(null);
+      } finally {
+        setIsEnsembleLoading(false);
+      }
+    };
+
+    fetchEnsemblePrediction();
+  }, [symbol]);
 
   useEffect(() => {
     if (!chartRef.current || !seriesRef.current) return;
@@ -362,7 +419,6 @@ export default function CoinPage() {
       setTradeMessage(null);
       const token = localStorage.getItem("token");
 
-      // 👇 ДОДАНО: Конвертуємо SL/TP в числа і відправляємо тільки якщо вони є
       const slValue = Number(stopLoss);
       const tpValue = Number(takeProfit);
 
@@ -386,8 +442,8 @@ export default function CoinPage() {
       if (res.ok) {
         setTradeMessage({ type: 'success', text: `Ордер ${type} успішно виконано!` });
         setInputValue("");
-        setStopLoss("");   // Очищаємо поля після успіху
-        setTakeProfit(""); // Очищаємо поля після успіху
+        setStopLoss("");
+        setTakeProfit("");
         fetchPortfolio();
       } else {
         setTradeMessage({ type: 'error', text: data.message || 'Помилка виконання ордера' });
@@ -410,11 +466,13 @@ export default function CoinPage() {
       <div className="flex flex-col xl:flex-row gap-6">
         <div className="flex-1 bg-zinc-900/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-black/50 border border-zinc-800 p-6 sm:p-8">
           <div className="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center mb-8 border-b border-zinc-800/80 pb-6 gap-6">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
               <h1 className="text-3xl font-extrabold uppercase tracking-wide text-white">
                 {symbol.replace(/usdt/i, " / USDT")}
               </h1>
-              <div className="flex items-center gap-6">
+              
+              {/* 👇 Оновлений блок із ціною та двома предиктами */}
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6">
                 {currentPrice ? (
                   <div className="text-4xl font-black text-white tracking-tight">
                     ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
@@ -422,38 +480,23 @@ export default function CoinPage() {
                 ) : (
                   <div className="animate-pulse bg-zinc-800 h-10 w-32 rounded"></div>
                 )}
-                <AiPredictionDisplay prediction={prediction} isLoading={isAiLoading} />
+                
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <AiPredictionDisplay 
+                    title={`ПРОГНОЗ (${aiInterval})`} 
+                    prediction={prediction} 
+                    isLoading={isAiLoading} 
+                  />
+                  <AiPredictionDisplay 
+                    title="АНСАМБЛЬ (15M, 1H, 1D)" 
+                    prediction={ensemblePrediction} 
+                    isLoading={isEnsembleLoading} 
+                  />
+                </div>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-4 justify-start 2xl:justify-end items-center">
-              
-              {/* Інструменти малювання */}
-              <div className="flex items-center gap-2 mr-4 border-r border-zinc-800/80 pr-4">
-                <button
-                  onClick={toggleDrawingMode}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
-                    isDrawingMode 
-                      ? 'bg-purple-500 text-zinc-950 shadow-md shadow-purple-500/20' 
-                      : 'bg-zinc-900 text-zinc-400 border border-zinc-700 hover:text-purple-400'
-                  }`}
-                  title="Клікніть по графіку, щоб додати стрілку"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                  </svg>
-                  {isDrawingMode ? "Малювання Увімк." : "Малювати"}
-                </button>
-                <button
-                  onClick={clearArrows}
-                  className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-all border border-transparent"
-                  title="Очистити всі стрілки"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                  </svg>
-                </button>
-              </div>
 
               {/* Прогноз */}
               <div className="flex items-center gap-2">
@@ -577,7 +620,6 @@ export default function CoinPage() {
               </div>
             </div>
 
-            {/* 👇 ДОДАНО: Поля для введення Stop Loss та Take Profit */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2 block">

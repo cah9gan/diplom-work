@@ -13,7 +13,6 @@ export class TradeModule implements OnModuleInit {
 
   onModuleInit() {
     setInterval(() => {
-      // Прибрали async/await і додали void
       void this.tradeService.checkAndTriggerPriceOrders();
     }, 1000);
   }

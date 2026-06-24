@@ -2,13 +2,14 @@ import { IsString, IsOptional, IsIn, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAnnouncementDTO {
-  @ApiProperty({ example: 'Технические работы на сервере' })
+  @ApiProperty({ example: 'Технічні роботи на сервері' })
   @IsString()
   @MaxLength(100)
   title: string;
 
   @ApiProperty({
-    example: 'Завтра с 02:00 до 03:00 платформа будет недоступна.',
+    example:
+      'Завтра с 02:00 до 03:00 платформа буде недоступна. Заздалегідь дякуємо за розуміння.',
   })
   @IsString()
   @IsOptional()

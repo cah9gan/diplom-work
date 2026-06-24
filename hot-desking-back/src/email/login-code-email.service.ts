@@ -15,7 +15,7 @@ export class LoginCodeEmailService {
     name: string;
     code: string;
   }): Promise<void> {
-    const subject = 'Код підтвердження для входу'; // Заголовок письма
+    const subject = 'Код підтвердження для входу';
 
     const input = new LoginEmailDTO(data);
     const html = await this.templates.render(input);

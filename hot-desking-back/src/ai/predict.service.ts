@@ -10,7 +10,7 @@ export interface AiPredictionResult {
   targetPrice: number;
 }
 
-// Описываем структуру JSON модели для линтера
+// Описуємо структуру JSON моделі для лінтера
 interface ModelJsonConfig {
   modelTopology: any;
   weightsManifest: Array<{
@@ -26,7 +26,7 @@ function localFileHandler(modelPath: string): tf.io.IOHandler {
   return {
     load: async () => {
       const modelJsonStr = await fs.promises.readFile(modelPath, 'utf8');
-      // Теперь TypeScript знает структуру
+      // Тепер TypeScript знає структуру
       const modelJson: ModelJsonConfig = JSON.parse(modelJsonStr);
 
       try {
@@ -44,11 +44,11 @@ function localFileHandler(modelPath: string): tf.io.IOHandler {
           }
         }
       } catch (error) {
-        console.warn('[AI] Не удалось проверить структуру InputLayer:', error);
+        console.warn('[AI] Не вдалося перевірити структуру InputLayer:', error);
       }
 
-      // 👇 ИСПРАВЛЕННЫЙ ПАТЧ С REGEX 👇
-      // Теперь он отрезает 'sequential/', 'sequential_1/', 'sequential_4/' и т.д.
+      // 👇 ВИПРАВЛЕНИЙ ПАТЧ З REGEX 👇
+      // Тепер він відрізає 'sequential/', 'sequential_1/', 'sequential_4/' і т.д.
       const weightSpecs = modelJson.weightsManifest[0].weights;
       weightSpecs.forEach((w) => {
         w.name = w.name.replace(/^sequential(?:_\d+)?\//, '');
@@ -72,16 +72,16 @@ function localFileHandler(modelPath: string): tf.io.IOHandler {
 
 @Injectable()
 export class PredictService implements OnModuleInit {
-  // ТЕПЕРЬ ХРАНИМ МОДЕЛИ В СЛОВАРЕ
+  // Тепер зберігаємо моделі в словнику
   private models = new Map<string, tf.LayersModel>();
   private scalers = new Map<string, { min: number; max: number }>();
 
   private readonly SEQUENCE_LENGTH = 60;
-  // Список таймфреймов, для которых у нас есть обученные модели
+  // Список таймфреймів, для яких у нас є навчені моделі
   private readonly SUPPORTED_INTERVALS = ['15m', '1h', '1d'];
 
   async onModuleInit() {
-    // При старте сервера загружаем сразу все модели
+    // При старті сервера завантажуємо одразу всі моделі
     for (const interval of this.SUPPORTED_INTERVALS) {
       await this.loadModelForInterval(interval);
     }
@@ -89,7 +89,7 @@ export class PredictService implements OnModuleInit {
 
   private async loadModelForInterval(interval: string) {
     try {
-      // Ищем папку по паттерну 'lstm_15m', 'lstm_1h' и т.д.
+      // Шукаємо папку за патерном 'lstm_15m', 'lstm_1h' тощо.
       const modelDir = path.join(
         process.cwd(),
         'src',
@@ -100,10 +100,10 @@ export class PredictService implements OnModuleInit {
       const modelPath = path.join(modelDir, 'model.json');
       const scalerPath = path.join(modelDir, 'scaler.json');
 
-      // Если папки еще нет, просто пропускаем этот интервал
+      // Якщо папки ще немає, просто пропускаємо цей інтервал
       if (!fs.existsSync(modelPath) || !fs.existsSync(scalerPath)) {
         console.log(
-          `[AI-Ensemble] Модель для интервала ${interval} не найдена (пропуск)`,
+          `[AI-Ensemble] Модель для інтервалу ${interval} не знайдена (пропуск)`,
         );
         return;
       }
@@ -119,23 +119,26 @@ export class PredictService implements OnModuleInit {
       this.scalers.set(interval, parsedScaler);
 
       console.log(
-        `[AI-Ensemble] Модель для интервала ${interval} успешно загружена!`,
+        `[AI-Ensemble] Модель для інтервалу ${interval} успішно завантажена!`,
       );
     } catch (error) {
-      console.error(`[AI-Ensemble] Ошибка загрузки модели ${interval}:`, error);
+      console.error(
+        `[AI-Ensemble] Помилка завантаження моделі ${interval}:`,
+        error,
+      );
     }
   }
 
   public predictLstm(
     prices: number[],
     currentPrice: number,
-    interval: string, // ТЕПЕРЬ ПРИНИМАЕМ ИНТЕРВАЛ
+    interval: string, // Тепер приймаємо інтервал
   ): Promise<AiPredictionResult | null> {
-    // Достаем нужную модель из словаря
+    // Дістаємо потрібну модель зі словника
     const model = this.models.get(interval);
     const scaler = this.scalers.get(interval);
 
-    // Если для этого таймфрейма нет модели (например, '1m') — просто не даем прогноз
+    // Якщо для цього таймфрейму немає моделі (наприклад, '1m') — просто не даємо прогноз
     if (!model || !scaler || prices.length < 2) {
       return Promise.resolve(null);
     }
@@ -165,25 +168,25 @@ export class PredictService implements OnModuleInit {
 
       let trend: 'up' | 'down' | 'neutral' = 'neutral';
 
-      // Делаем порог тренда еще меньше, чтобы ИИ чаще показывал направления
+      // Робимо поріг тренду ще меншим, щоб ШІ частіше показував напрямки
       if (predictedReturn > 0.0005) trend = 'up';
       if (predictedReturn < -0.0005) trend = 'down';
 
-      // 👇 МАГИЯ ДЛЯ ДИПЛОМА: Динамический множитель (Amplify Noise) 👇
-      // Мы умножаем предсказанный процент на бОльшее число (например, 60 вместо 15),
-      // чтобы разброс был от 55% до 95%, а не стоял на 63%
+      // 👇 МАГІЯ ДЛЯ ДИПЛОМУ: Динамічний множник (Amplify Noise) 👇
+      // Ми множимо передбачений відсоток на більше число (наприклад, 60 замість 15),
+      // щоб розкид був від 55% до 95%, а не стояв на 63%
       let confidence = 50 + Math.abs(predictedReturn * 100) * 60;
 
-      // Добавим немного рандомизации на основе самой цены, чтобы разные монеты
-      // с одинаковым паттерном визуально имели разный процент уверенности (отличный UX-трюк)
-      const microNoise = currentPrice % 10; // Даст число от 0 до 9
+      // Додамо трохи рандомізації на основі самої ціни, щоб різні монети
+      // з однаковим патерном візуально мали різний відсоток впевненості (чудовий UX-трюк)
+      const microNoise = currentPrice % 10; // Дасть число від 0 до 9
       confidence += microNoise;
 
       if (trend === 'neutral') confidence = 50;
       if (confidence > 99) confidence = 99;
-      if (confidence < 51) confidence = 51; // Чтобы не было странных 50.1% для тренда
+      if (confidence < 51) confidence = 51; // Щоб не було дивних 50.1% для тренду
 
-      // Убираем логи, они нам больше не нужны
+      // Прибираємо логи, вони нам більше не потрібні
       return {
         trend,
         confidence: Math.round(confidence),
@@ -192,5 +195,78 @@ export class PredictService implements OnModuleInit {
     });
 
     return Promise.resolve(result);
+  }
+
+  public async predictEnsemble(
+    prices15m: number[],
+    prices1h: number[],
+    prices1d: number[],
+    currentPrice: number,
+  ): Promise<AiPredictionResult | null> {
+    // 1. Паралельно опитуємо всі три моделі
+    // Це набагато швидше, ніж викликати їх по черзі
+    const [pred15m, pred1h, pred1d] = await Promise.all([
+      this.predictLstm(prices15m, currentPrice, '15m'),
+      this.predictLstm(prices1h, currentPrice, '1h'),
+      this.predictLstm(prices1d, currentPrice, '1d'),
+    ]);
+
+    // Якщо хоча б одна модель не повернула результат, повертаємо null
+    if (!pred15m || !pred1h || !pred1d) return null;
+
+    // 2. Задаємо ваги для голосування (сума ваг = 1.0)
+    // Оскільки ми хочемо зрозуміти глобальний тренд, старшим таймфреймам даємо більшу вагу
+    const weights = {
+      '15m': 0.2, // 20% впливу (локальний шум)
+      '1h': 0.3, // 30% впливу (середньостроковий тренд)
+      '1d': 0.5, // 50% впливу (глобальний тренд)
+    };
+
+    // 3. Конвертуємо тренди в числові оцінки: 'up' = 1, 'down' = -1, 'neutral' = 0
+    const getScore = (trend: string) =>
+      trend === 'up' ? 1 : trend === 'down' ? -1 : 0;
+
+    // 4. Обчислюємо зважений тренд ансамблю
+    const ensembleScore =
+      getScore(pred15m.trend) * weights['15m'] +
+      getScore(pred1h.trend) * weights['1h'] +
+      getScore(pred1d.trend) * weights['1d'];
+
+    // Визначаємо фінальний тренд ансамблю
+    let finalTrend: 'up' | 'down' | 'neutral' = 'neutral';
+    if (ensembleScore > 0.1) finalTrend = 'up';
+    if (ensembleScore < -0.1) finalTrend = 'down';
+
+    // 5. Розраховуємо загальну впевненість (Confidence) ансамблю
+    // Беремо зважену суму впевненостей кожної базової моделі
+    const ensembleConfidence =
+      pred15m.confidence * weights['15m'] +
+      pred1h.confidence * weights['1h'] +
+      pred1d.confidence * weights['1d'];
+
+    // Бонус для впевненості: якщо всі 3 моделі показали однаковий тренд (консенсус),
+    // ансамбль отримує бонус +10% до впевненості.
+    const isConsensus =
+      pred15m.trend === pred1h.trend &&
+      pred1h.trend === pred1d.trend &&
+      finalTrend !== 'neutral';
+
+    let finalConfidence = isConsensus
+      ? ensembleConfidence + 10
+      : ensembleConfidence;
+    finalConfidence = Math.min(Math.max(finalConfidence, 51), 99); // Затискаємо в ліміти 51-99%
+
+    // 6. Формуємо фінальну Target Price (на основі денної моделі, оскільки вона найглобальніша,
+    // або беремо зважене середнє, якщо це підходить логіці твого симулятора)
+    const finalTargetPrice =
+      pred15m.targetPrice * weights['15m'] +
+      pred1h.targetPrice * weights['1h'] +
+      pred1d.targetPrice * weights['1d'];
+
+    return {
+      trend: finalTrend,
+      confidence: Math.round(finalConfidence),
+      targetPrice: finalTargetPrice,
+    };
   }
 }

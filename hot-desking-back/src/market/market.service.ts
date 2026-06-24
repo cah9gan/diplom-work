@@ -196,6 +196,53 @@ export class MarketService implements OnModuleInit, OnModuleDestroy {
     return prediction;
   }
 
+  public async getInstantEnsemblePrediction(symbol: string) {
+    try {
+      // 1. Запитуємо історію для всіх трьох таймфреймів паралельно
+      const [history15m, history1h, history1d] = await Promise.all([
+        this.getHistory(symbol, '15m'),
+        this.getHistory(symbol, '1h'),
+        this.getHistory(symbol, '1d'),
+      ]);
+
+      // 2. Перевіряємо, чи достатньо даних для кожної моделі (мінімум 60 свічок)
+      if (
+        history15m.length < 60 ||
+        history1h.length < 60 ||
+        history1d.length < 60
+      ) {
+        console.warn(
+          `[MarketService] Недостатньо даних для ансамблю: ${symbol}`,
+        );
+        return { trend: 'neutral', confidence: 0, targetPrice: 0 };
+      }
+
+      // 3. Формуємо масиви цін закриття (останні 60 значень)
+      const prices15m = history15m.slice(-60).map((h) => h.close);
+      const prices1h = history1h.slice(-60).map((h) => h.close);
+      const prices1d = history1d.slice(-60).map((h) => h.close);
+
+      // 4. Поточну ціну беремо з найменшого таймфрейму (вона найактуальніша)
+      const currentPrice = prices15m[prices15m.length - 1];
+
+      // 5. Викликаємо метод ансамблю з PredictService
+      const prediction = await this.predictService.predictEnsemble(
+        prices15m,
+        prices1h,
+        prices1d,
+        currentPrice,
+      );
+
+      return prediction;
+    } catch (error) {
+      console.error(
+        `[MarketService] Помилка під час генерації ансамбль-прогнозу для ${symbol}:`,
+        error,
+      );
+      return { trend: 'neutral', confidence: 0, targetPrice: 0 };
+    }
+  }
+
   public async getBulk24hStats(symbols: string[]) {
     if (!symbols || symbols.length === 0) return [];
 

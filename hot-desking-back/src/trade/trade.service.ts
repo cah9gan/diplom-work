@@ -30,9 +30,6 @@ export class TradeService {
     private readonly priceService: PriceService,
   ) {}
 
-  // ---------------------------------------------------------
-  // 1. ПУБЛИЧНЫЙ ФАСАД (Только маршрутизация логики)
-  // ---------------------------------------------------------
   public async executeOrder(userId: string, dto: CreateOrderDTO) {
     const marketPrice = this.priceService.getLatestPrice(dto.symbol);
     const amount = new Decimal(dto.amount);
@@ -67,7 +64,7 @@ export class TradeService {
   }
 
   // ---------------------------------------------------------
-  // 🔥 АВТОМАТИЧНЕ ЗАКРИТТЯ ПО SL / TP (Викликається фоновим таском)
+  // АВТОМАТИЧНЕ ЗАКРИТТЯ ПО SL / TP (Викликається фоновим таском)
   // ---------------------------------------------------------
   public async checkAndTriggerPriceOrders() {
     const positions = await this.prisma.tradePosition.findMany({
@@ -152,10 +149,6 @@ export class TradeService {
       return wallet;
     });
   }
-
-  // ---------------------------------------------------------
-  // 2. ПРИВАТНЫЕ МЕТОДЫ (Изолированная бизнес-логика)
-  // ---------------------------------------------------------
 
   private async processBuy(
     db: TransactionDb,
@@ -258,10 +251,6 @@ export class TradeService {
       message: 'Sell order executed',
     };
   }
-
-  // ---------------------------------------------------------
-  // 3. МЕТОДЫ ПРОСМОТРА (Чтение данных)
-  // ---------------------------------------------------------
 
   public async getPortfolio(userId: string) {
     const user = await this.prisma.user.findUnique({

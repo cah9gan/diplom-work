@@ -4,19 +4,19 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 export class PriceService {
   private readonly latestPrices = new Map<string, number>();
 
-  // Обновляем цену при получении сообщения от Binance
+  // Оновлюємо ціну при отриманні повідомлення від Binance
   updatePrice(symbol: string, price: number) {
     this.latestPrices.set(symbol.toUpperCase(), price);
   }
 
-  // 1. Строгий метод для ТОРГОВЛИ (если цены нет — выдаем ошибку, торговать нельзя)
+  // 1. Строгий метод для Торговлі (якщло ціни немає — видаємо помилку, торгувати не можна)
   getLatestPrice(symbol: string): number {
     const price = this.latestPrices.get(symbol.toUpperCase());
     if (!price) throw new BadRequestException('Price not available yet');
     return price;
   }
 
-  // 2. Мягкий метод для ПОРТФЕЛЯ (если цены пока нет — отдаем 0, чтобы страница профиля не падала)
+  // 2. М'який метод для портфеля (якщо ціни поки немає — віддаємо 0, щоб сторінка профілю не падала)
   getPrice(symbol: string): number {
     return this.latestPrices.get(symbol.toUpperCase()) || 0;
   }

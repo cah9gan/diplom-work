@@ -7,30 +7,30 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MarketStreamMessageDTO } from './dto/market-stream.dto';
 
-// Настраиваем Gateway. cors: true нужен, чтобы фронтенд с другого порта (3001) мог подключиться
+// Налаштовуємо Gateway. cors: true потрібен, щоб фронтенд з іншого порту (3001) міг підключитися
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
-  namespace: '/market-stream', // Это "канал", к которому будет подключаться фронтенд
+  namespace: '/market-stream', // Це "канал", до якого буде підключатися фронтенд
 })
 export class MarketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server; // Это объект сервера, через который мы будем рассылать сообщения
+  server: Server; // Це об'єкт сервера, через який ми будемо розсилати повідомлення
 
-  // Когда фронтенд подключается
+  // Коли фронтенд підключається
   handleConnection(client: Socket) {
-    console.log(`[MarketGateway] Клиент подключился: ${client.id}`);
+    console.log(`[MarketGateway] Клієнт підключився: ${client.id}`);
   }
 
   // Когда фронтенд отключается
   handleDisconnect(client: Socket) {
-    console.log(`[MarketGateway] Клиент отключился: ${client.id}`);
+    console.log(`[MarketGateway] Клієнт відключився: ${client.id}`);
   }
 
-  // Метод, который мы будем вызывать из MarketService, чтобы разослать свежую свечу всем!
+  // Метод, який ми будемо викликати з MarketService, щоб розіслати свіжу свічку всім!
   public broadcastMarketData(data: MarketStreamMessageDTO) {
-    // Рассылаем событие с именем 'kline-update' всем, кто нас слушает
+    //  розсилаємо подію з ім'ям 'kline-update' всім, хто нас слухає
     this.server.emit('kline-update', data);
   }
 }

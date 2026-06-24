@@ -5,6 +5,6 @@ export class VerifyCodeDTO {
   email: string;
 
   @IsString()
-  @Length(6, 6, { message: 'Код должен состоять из 6 символов' })
+  @Length(6, 6, { message: 'Код повинен бути довжиною 6 символів' })
   code: string;
 }

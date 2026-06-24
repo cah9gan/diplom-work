@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma';
 import { CreateAnnouncementDTO, NewsItem } from './dto';
-import { CoinGeckoService } from './coingecko.service'; // 👈 Импортируем наш новый сервис
+import { CoinGeckoService } from './coingecko.service';
 
 @Injectable()
 export class NewsService {
@@ -9,17 +9,14 @@ export class NewsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly coinGeckoService: CoinGeckoService, // 👈 Инжектим его сюда
+    private readonly coinGeckoService: CoinGeckoService,
   ) {}
 
   public async getCombinedNews(): Promise<NewsItem[]> {
-    // 1. Берем системные объявления (async)
     const announcements = await this.getAdminAnnouncements();
 
-    // 2. Берем внешние новости (sync - они уже скачаны в фоне!)
     const externalNews = this.coinGeckoService.getCachedNews();
 
-    // 3. Склеиваем и сортируем
     return [...announcements, ...externalNews].sort(
       (a, b) => b.publishedAt.getTime() - a.publishedAt.getTime(),
     );

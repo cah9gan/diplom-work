@@ -24,10 +24,10 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profile: ProfileService,
-    private readonly loginEmailService: LoginCodeEmailService, // 👈 Внедряем сервис писем
+    private readonly loginEmailService: LoginCodeEmailService,
   ) {}
 
-  // Шаг 1: Проверка пароля и отправка кода
+  // Шаг 1: Перевірка параля та відправка коду
   public async login(
     data: loginDTO,
   ): Promise<
@@ -42,53 +42,52 @@ export class AuthService {
       throw new UnauthorizedException(ERROR_MESSAGE);
     }
 
-    // Подтягиваем профиль, чтобы использовать имя юзера в красивом HTML-письме
+    // Підтягуємо профіль, щоб використовувати ім'я користувача у красивому HTML-листі
     const profile = await this.profile.getSelf(user.id);
 
     if (user.twoFactorStatus === TwoFactorStatus.Inactive) {
-      // 2FA выключена -> отдаем JWT сразу (старое поведение)
+      // 2FA вимкнена -> віддаємо JWT одразу (старе поведінка)
       const token = await this.jwt.sign(user.id, user.role);
       return {
         ...profile,
         token,
-        requires2FA: false, // Фронтенд поймет, что код не нужен
+        requires2FA: false, // Фронтенд зрозуміє, що код не потрібен
       };
     }
 
-    // Генерируем 6 цифр
+    // Генеруємо 6 цифр
     const rawCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Хешируем код через твой утилитный класс (предполагается, что в Hasher есть метод hash)
     const hashedCode = await Hasher.hash(rawCode);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 минут жизни
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 хвилин
 
-    // Сохраняем или обновляем код в базе данных
+    // Зберігаємо або оновлюємо код у базі даних
     await this.prisma.loginEmail.upsert({
       where: { userId: user.id },
       update: { code: hashedCode, expiresAt, attempts: 0 },
       create: { userId: user.id, code: hashedCode, expiresAt },
     });
 
-    // Отправляем письмо с сырым (не захешированным) кодом
+    // Відправляємо лист з кодом підтвердження на пошту користувача
     await this.loginEmailService.send({
       email: data.email,
       name: profile.firstName,
       code: rawCode,
     });
 
-    // Отвечаем фронтенду, что токена пока нет, нужно переключиться на окно ввода кода
+    // Відповідаємо фронтенду, що токена поки немає, потрібно переключитися на вікно введення коду
     return {
       message: 'Код підтвердження відправлено на пошту',
       requires2FA: true,
     };
   }
 
-  // Шаг 2: Проверка кода и финальная выдача JWT
+  // Шаг 2: Перевірка кода і финальна видача JWT
   public async verifyCode(data: VerifyCodeDTO): Promise<AccessDTO> {
     const user = await this.retrieveForLogin(data.email);
     this.checkLoginPermission(user);
 
-    // Достаем запись о запрошенном коде
+    // Дістаємо запис про запрошений код
     const loginRecord = await this.prisma.loginEmail.findUnique({
       where: { userId: user.id },
     });
@@ -97,7 +96,7 @@ export class AuthService {
       throw new BadRequestException('Запит на авторизацію не знайдено');
     }
 
-    // Проверяем срок действия (10 минут)
+    // Перевіряємо термін дії (10 хвилин)
     if (new Date() > loginRecord.expiresAt) {
       await this.prisma.loginEmail.delete({ where: { userId: user.id } });
       throw new BadRequestException(
@@ -105,16 +104,13 @@ export class AuthService {
       );
     }
 
-    // Сверяем введенный код с хешем в БД
     const isCodeValid = await Hasher.verify(loginRecord.code, data.code);
     if (!isCodeValid) {
       throw new UnauthorizedException('Невірний код підтвердження');
     }
 
-    // Если всё прошло успешно, удаляем код из базы, чтобы его нельзя было использовать дважды
     await this.prisma.loginEmail.delete({ where: { userId: user.id } });
 
-    // Генерируем токен и отдаем данные профиля (ровно то, что раньше делал метод login)
     const token = await this.jwt.sign(user.id, user.role);
     const profile = await this.profile.getSelf(user.id);
 
@@ -146,7 +142,7 @@ export class AuthService {
       hash: data.hash,
       role: mapUserRoleFromDb(data.role),
       status: mapUserStatusFromDb(data.status),
-      twoFactorStatus: data.twoFactorStatus as TwoFactorStatus, // 👈 Добавь эту строчку
+      twoFactorStatus: data.twoFactorStatus as TwoFactorStatus,
     };
   }
 

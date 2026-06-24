@@ -16,13 +16,9 @@ import { UserRole } from '../users/dto';
 import { CreateAnnouncementDTO } from './dto';
 
 @ApiTags('News')
-@Controller('news') // 👈 Прибрали @UseGuards звідси, тепер контролер відкритий
+@Controller('news')
 export class NewsController {
   constructor(private readonly newsService: NewsService) {}
-
-  // ---------------------------------------------------------
-  // ПУБЛІЧНИЙ МЕТОД (Для ВСІХ користувачів, навіть без логіна)
-  // ---------------------------------------------------------
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -31,11 +27,11 @@ export class NewsController {
   }
 
   // ---------------------------------------------------------
-  // АДМИН ПАНЕЛЬ (Только для администраторов)
+  // АДМІН ПАНЕЛЬ (Тільки для адміністраторів)
   // ---------------------------------------------------------
 
   @ApiBearerAuth(SWAGGER_BEARER_NAME)
-  @UseGuards(AccessGuard) // 👈 Захищаємо тільки цей метод
+  @UseGuards(AccessGuard)
   @Roles(UserRole.Admin)
   @Post('announcements')
   @HttpCode(HttpStatus.CREATED)
@@ -44,7 +40,7 @@ export class NewsController {
   }
 
   @ApiBearerAuth(SWAGGER_BEARER_NAME)
-  @UseGuards(AccessGuard) // 👈 І захищаємо цей метод
+  @UseGuards(AccessGuard)
   @Roles(UserRole.Admin)
   @Delete('announcements/:id')
   @HttpCode(HttpStatus.OK)

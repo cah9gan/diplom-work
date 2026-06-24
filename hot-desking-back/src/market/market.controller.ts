@@ -26,19 +26,19 @@ export class MarketController {
   ) {}
 
   @Get('symbols')
-  @ApiOperation({ summary: 'Получить список отслеживаемых криптовалют' })
+  @ApiOperation({ summary: 'Отримати список відстежуваних криптовалют' })
   async getSupportedSymbols(): Promise<string[]> {
     return this.marketService.getSupportedSymbols();
   }
 
   @Get('intervals')
-  @ApiOperation({ summary: 'Получить список доступных таймфреймов' })
+  @ApiOperation({ summary: 'Отримати список доступних таймфреймів' })
   getSupportedIntervals(): string[] {
     return this.marketService.getSupportedIntervals();
   }
 
   @Get('history/:symbol')
-  @ApiOperation({ summary: 'Получить исторические данные для графика' })
+  @ApiOperation({ summary: 'Отримати історичні дані для графіка' })
   async getHistory(
     @Param('symbol') symbol: string,
     @Query('interval') interval?: string,
@@ -47,7 +47,7 @@ export class MarketController {
   }
 
   @Get('predict/:symbol')
-  @ApiOperation({ summary: 'Получить мгновенный ИИ-прогноз для монеты' })
+  @ApiOperation({ summary: 'Отримати миттєвий ШІ-прогноз для монети' })
   async getPrediction(
     @Param('symbol') symbol: string,
     @Query('interval') interval?: string,
@@ -55,20 +55,29 @@ export class MarketController {
     return this.marketService.getInstantPrediction(symbol, interval || '1d');
   }
 
-  // 👇 НОВЫЙ ЭНДПОИНТ ДЛЯ БЫСТРОЙ ЗАГРУЗКИ СТАТИСТИКИ 👇
+  @Get('predict-ensemble/:symbol')
+  @ApiOperation({
+    summary: 'Отримати ШІ-прогноз на основі ансамблю (15m, 1h, 1d)',
+  })
+  async getEnsemblePrediction(@Param('symbol') symbol: string) {
+    // Викликаємо наш новий метод із сервісу.
+    // Інтервал тут передавати не потрібно, оскільки ансамбль під капотом
+    // сам робить запити одразу для трьох таймфреймів.
+    return this.marketService.getInstantEnsemblePrediction(symbol);
+  }
 
   @Get('stats/24h')
   @ApiOperation({
-    summary: 'Получить сводку за 24ч для пар (быстрая загрузка дашборда)',
+    summary: 'Отримати сводку за 24ч для пар (швидка завантаження дашборда)',
   })
   async get24hStats(@Query('symbols') symbolsQuery?: string) {
     let symbolsList: string[] = [];
 
     if (symbolsQuery) {
-      // Если фронтенд попросил конкретные пары: ?symbols=BTCUSDT,ETHUSDT
+      // Якщо фронтенд передав конкретні пари: ?symbols=BTCUSDT,ETHUSDT
       symbolsList = symbolsQuery.split(',').map((s) => s.trim().toUpperCase());
     } else {
-      // Если фронт не указал пары, бэкенд сам берет все активные монеты из БД
+      // Якщо фронт не вказав пари, бэкенд сам бере всі активні монети з БД
       symbolsList = await this.marketService.getSupportedSymbols();
     }
 
@@ -76,26 +85,26 @@ export class MarketController {
   }
 
   // ---------------------------------------------------------
-  // АДМИН ПАНЕЛЬ
+  // АДМІН ПАНЕЛЬ
   // ---------------------------------------------------------
 
   @Roles(UserRole.Admin)
   @Post('symbols')
-  @ApiOperation({ summary: 'Добавить новую криптовалюту для отслеживания' })
+  @ApiOperation({ summary: 'Додати нову криптовалюту для відстеження' })
   async addSymbol(@Body() data: AddSymbolDTO) {
     return this.marketService.addTrackedSymbol(data.symbol, data.name);
   }
 
   @Roles(UserRole.Admin)
   @Get('binance-symbols')
-  @ApiOperation({ summary: 'Получить подсказки монет с Binance' })
+  @ApiOperation({ summary: 'Отримати підказки монет з Binance' })
   async getBinanceSymbols(): Promise<string[]> {
     return this.symbolsService.getAvailableBinanceSymbols();
   }
 
   @Roles(UserRole.Admin)
   @Delete('symbols/:symbol')
-  @ApiOperation({ summary: 'Удалить криптовалюту из отслеживаемых' })
+  @ApiOperation({ summary: 'Видалити криптовалюту з відстежуваних' })
   async removeSymbol(@Param('symbol') symbol: string) {
     await this.marketService.removeTrackedSymbol(symbol);
     return { success: true };

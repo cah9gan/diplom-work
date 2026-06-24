@@ -7,20 +7,20 @@ import { readFile } from 'fs/promises';
 export class EmailTemplateService {
   private readonly templates = join(__dirname, 'templates');
 
-  // Используем дженерик, чтобы линтер точно знал, что поле template существует
+  // Використовуємо дженерик, щоб лінтер точно знав, що поле template існує
   public async render<T extends { template: string }>(
     data: T,
   ): Promise<string> {
     const filePath = join(this.templates, `${data.template}.hbs`);
 
     try {
-      // Пытаемся прочитать файл
+      // Намагаємось прочитати файл шаблона
       const templateStr = await readFile(filePath, 'utf-8');
       const delegate = Handlebars.compile(templateStr);
 
       return delegate(data);
     } catch {
-      // Если файла нет (ошибка ENOENT) или нет прав доступа, выбрасываем правильную ошибку
+      // Якщо файла немає (помилка ENOENT) або немає прав доступу, викидаємо правильну помилку
       throw new InternalServerErrorException(
         `Email template '${data.template}' not found`,
       );

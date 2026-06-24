@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: config.frontend.baseUrl, // Берет 'http://localhost:3001' прямо из твоего конфига
+    origin: config.frontend.baseUrl,
     credentials: true,
   });
 

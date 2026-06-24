@@ -4,7 +4,7 @@ import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 export class AddSymbolDTO {
   @ApiProperty({
     example: 'adausdt',
-    description: 'Торговая пара на Binance (без пробелов)',
+    description: 'Торгова пара на Binance (без пробілів)',
   })
   @IsString()
   @IsNotEmpty()
@@ -13,7 +13,7 @@ export class AddSymbolDTO {
 
   @ApiPropertyOptional({
     example: 'Cardano',
-    description: 'Понятное название монеты',
+    description: `Понятное название монеты Зрозуміле ім'я монети (необов'язково)`,
   })
   @IsString()
   @IsOptional()

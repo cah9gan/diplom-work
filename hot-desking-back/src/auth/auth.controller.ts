@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { AccessDTO, loginDTO, VerifyCodeDTO } from './dto'; // 👈 Добавили импорт VerifyCodeDTO
+import { AccessDTO, loginDTO, VerifyCodeDTO } from './dto';
 import { AuthService } from './auth.service';
 import {
   ApiBadRequestResponse,
@@ -12,10 +12,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  @ApiCreatedResponse({ description: 'Код отправлен на почту (requires2FA)' })
+  @ApiCreatedResponse({
+    description: 'Код відправлений на пошту (requires2FA)',
+  })
   @ApiBadRequestResponse({ description: 'Wrong input' })
   @ApiUnauthorizedResponse({ description: 'Wrong email or password' })
-  // 👇 Точно такая же сигнатура, как мы сделали в auth.service.ts
   login(
     @Body() data: loginDTO,
   ): Promise<
@@ -25,15 +26,13 @@ export class AuthController {
     return this.authService.login(data);
   }
 
-  // 👇 НОВЫЙ ЭНДПОИНТ ДЛЯ ПРОВЕРКИ КОДА 👇
   @Post('verify')
-  @ApiCreatedResponse({ type: AccessDTO, description: 'Login successful' }) // 👈 Теперь токен возвращается отсюда
+  @ApiCreatedResponse({ type: AccessDTO, description: 'Login successful' })
   @ApiBadRequestResponse({
-    description: 'Срок действия кода истек или неверный запрос',
+    description: 'Час роботи коду закінчився або неправильний запит',
   })
-  @ApiUnauthorizedResponse({ description: 'Неверный код' })
+  @ApiUnauthorizedResponse({ description: 'Невірний код' })
   verifyCode(@Body() verifyDto: VerifyCodeDTO): Promise<AccessDTO> {
-    // 👈 Исправили регистр DTO и убрали async
-    return this.authService.verifyCode(verifyDto); // 👈 Исправили название метода
+    return this.authService.verifyCode(verifyDto);
   }
 }
